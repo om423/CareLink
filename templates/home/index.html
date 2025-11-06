@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+  <div class="row">
+    <div class="col-lg-8 mx-auto text-center">
+      <h1 class="display-4 mb-4">
+        <i class="fas fa-heartbeat text-primary me-2"></i>
+        Welcome to CareLink
+      </h1>
+      <p class="lead mb-4">
+        AI-Enhanced Telehealth Triage Platform
+      </p>
+      <p class="text-muted mb-5">
+        Get intelligent medical assessments and easily connect with healthcare professionals near you.
+      </p>
+      
+      {% if not user.is_authenticated %}
+      <div class="d-flex gap-3 justify-content-center">
+        <a href="{% url 'accounts:index' %}" class="btn btn-primary btn-lg">
+          <i class="fas fa-user-plus me-2"></i>Get Started
+        </a>
+        <a href="{% url 'accounts:index' %}" class="btn btn-outline-primary btn-lg">
+          <i class="fas fa-sign-in-alt me-2"></i>Sign In
+        </a>
+      </div>
+      {% else %}
+      <div class="d-flex gap-3 justify-content-center">
+        <a href="{% url 'triage:index' %}" class="btn btn-primary btn-lg">
+          <i class="fas fa-stethoscope me-2"></i>Start Triage
+        </a>
+        <a href="{% url 'appointments:index' %}" class="btn btn-success btn-lg">
+          <i class="fas fa-calendar-check me-2"></i>Book Appointment
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  
+  <div class="row mt-5">
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        <div class="card-body text-center">
+          <i class="fas fa-robot medical-icon mb-3"></i>
+          <h5 class="card-title">AI-Powered Triage</h5>
+          <p class="card-text text-muted">
+            Describe your symptoms in plain language and receive intelligent preliminary assessments.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        <div class="card-body text-center">
+          <i class="fas fa-map-marker-alt medical-icon mb-3"></i>
+          <h5 class="card-title">Find Nearby Care</h5>
+          <p class="card-text text-muted">
+            Locate clinics, hospitals, and pharmacies near you based on your location and needs.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        <div class="card-body text-center">
+          <i class="fas fa-calendar-alt medical-icon mb-3"></i>
+          <h5 class="card-title">Easy Scheduling</h5>
+          <p class="card-text text-muted">
+            Book appointments directly online with healthcare professionals through our platform.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
