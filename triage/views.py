@@ -17,6 +17,22 @@ def index(request):
     return render(request, "triage/index.html")
 
 
+@login_required
+def history(request):
+    """View triage history for the current user."""
+    interactions = TriageInteraction.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, "triage/history.html", {"interactions": interactions})
+
+
+@login_required
+def detail(request, interaction_id):
+    """View details of a specific triage interaction."""
+    from django.shortcuts import get_object_or_404
+
+    interaction = get_object_or_404(TriageInteraction, id=interaction_id, user=request.user)
+    return render(request, "triage/detail.html", {"interaction": interaction})
+
+
 def get_patient_context(user):
     """Helper to get patient context for triage."""
     patient_ctx = {}
