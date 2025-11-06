@@ -26,3 +26,4 @@ env/
 ENV/
 .venv
 
+CLAUDE.md
