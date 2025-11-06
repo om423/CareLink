@@ -13,10 +13,36 @@ def index(request):
 
 
 @login_required
+def onboarding(request):
+    """Onboarding flow for new users to complete their profile."""
+    profile, created = PatientProfile.objects.get_or_create(user=request.user)
+
+    # If already completed onboarding, redirect to home
+    if profile.onboarding_completed:
+        return redirect('home:index')
+
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            profile = form.save(commit=False)
+            profile.onboarding_completed = True
+            profile.save()
+            messages.success(request, 'Welcome to CareLink! Your profile has been set up successfully.')
+            return redirect('home:index')
+    else:
+        form = ProfileForm(instance=profile)
+
+    return render(request, 'profiles/onboarding.html', {
+        'form': form,
+        'profile': profile
+    })
+
+
+@login_required
 def edit_profile(request):
     """Edit patient profile view."""
     profile, created = PatientProfile.objects.get_or_create(user=request.user)
-    
+
     if request.method == 'POST':
         form = ProfileForm(request.POST, instance=profile)
         if form.is_valid():
@@ -25,7 +51,7 @@ def edit_profile(request):
             return redirect('profiles:edit')
     else:
         form = ProfileForm(instance=profile)
-    
+
     return render(request, 'profiles/edit_profile.html', {
         'form': form,
         'profile': profile

@@ -8,7 +8,7 @@
     <div class="container py-3">
       <div class="d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-3">
-          <a href="{% url 'triage:index' %}" class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-text-muted);">
+          <a href="{% url 'home:index' %}" class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-text-muted);">
             <i class="fas fa-arrow-left"></i>
           </a>
           <div>
@@ -107,9 +107,9 @@
 
           <!-- Input Area -->
           <div class="border-top p-3" style="border-color: var(--cl-border);">
-            <form class="d-flex gap-2" method="post" onsubmit="const btn=this.querySelector('button[type=submit]'); if(btn){ btn.disabled=true; btn.dataset.originalText=btn.textContent; btn.textContent='Generating…'; }">
+            <form id="triageForm" class="d-flex gap-2" method="post" onsubmit="const btn=this.querySelector('button[type=submit]'); if(btn){ btn.disabled=true; btn.dataset.originalText=btn.textContent; btn.textContent='Generating…'; }">
               {% csrf_token %}
-              <textarea id="symptoms" name="symptoms" rows="2" class="form-control" placeholder="Describe your symptoms..." style="resize: none; border: 1px solid var(--cl-border);">{{ request.POST.symptoms }}</textarea>
+              <textarea id="symptoms" name="symptoms" rows="2" class="form-control" placeholder="Describe your symptoms..." style="resize: none; border: 1px solid var(--cl-border);"></textarea>
               <button type="submit" class="btn btn-primary" style="height: fit-content; align-self: flex-end;">
                 <i class="fas fa-paper-plane"></i>
               </button>
@@ -198,4 +198,26 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const textarea = document.getElementById('symptoms');
+  const form = document.getElementById('triageForm');
+
+  if (textarea && form) {
+    textarea.addEventListener('keydown', function(e) {
+      // Check if Enter key is pressed without Shift
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault(); // Prevent new line
+
+        // Check if there's content to submit
+        if (textarea.value.trim()) {
+          form.requestSubmit(); // Submit the form
+        }
+      }
+      // Shift + Enter will create a new line (default behavior)
+    });
+  }
+});
+</script>
 {% endblock %}

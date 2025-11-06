@@ -21,7 +21,8 @@ class PatientProfile(models.Model):
     weight = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text="Weight in kg")
     medical_history = models.TextField(blank=True, help_text="Previous medical conditions and history")
     allergies = models.TextField(blank=True, help_text="Known allergies (medications, foods, environmental)")
-    
+    onboarding_completed = models.BooleanField(default=False, help_text="Whether user has completed onboarding")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

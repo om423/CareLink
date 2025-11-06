@@ -36,18 +36,31 @@ def login_view(request):
     """User login view."""
     if request.user.is_authenticated:
         return redirect('home:index')
-    
+
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+
+            # Check if user needs to complete onboarding
+            try:
+                profile = user.patient_profile
+                if not profile.onboarding_completed:
+                    messages.info(request, f'Welcome, {user.username}! Please complete your profile to get started.')
+                    return redirect('profiles:onboarding')
+            except PatientProfile.DoesNotExist:
+                # Create profile and redirect to onboarding
+                PatientProfile.objects.create(user=user)
+                messages.info(request, f'Welcome, {user.username}! Please complete your profile to get started.')
+                return redirect('profiles:onboarding')
+
             messages.success(request, f'Welcome back, {user.username}!')
             next_url = request.GET.get('next', 'home:index')
             return redirect(next_url)
     else:
         form = AuthenticationForm()
-    
+
     return render(request, 'accounts/login.html', {'form': form})
 
 
