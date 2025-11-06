@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div style="background: var(--cl-bg); min-height: calc(100vh - 100px);">
+  <div class="container py-4">
+    <!-- Welcome Header -->
+    <div class="mb-4">
+      <h1 class="mb-2" style="font-size: var(--cl-h2); color: var(--cl-text); font-weight: var(--cl-font-bold);">
+        Welcome back, {{ user.first_name|default:user.username }}!
+      </h1>
+      <p class="text-muted mb-0" style="font-size: var(--cl-base);">
+        Here's your health dashboard
+      </p>
+    </div>
+
+    <!-- Profile Completeness Alert -->
+    {% if not profile_complete %}
+    <div class="alert" style="background: #fffbeb; border: 1px solid #fbbf24; border-radius: var(--cl-radius-md); margin-bottom: 1.5rem;">
+      <div class="d-flex gap-3 align-items-center">
+        <i class="fas fa-exclamation-circle" style="color: #f59e0b; font-size: 1.5rem;"></i>
+        <div class="flex-grow-1">
+          <strong style="color: var(--cl-text);">Complete Your Profile</strong>
+          <p class="mb-0 mt-1" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
+            Add your medical information to get more accurate health assessments.
+          </p>
+        </div>
+        <a href="{% url 'profiles:edit' %}" class="btn btn-sm" style="background: #f59e0b; color: white; white-space: nowrap;">
+          Update Profile
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Stats Cards Row -->
+    <div class="row g-3 mb-4">
+      <!-- Total Assessments -->
+      <div class="col-md-4">
+        <div class="card h-100" style="border: 1px solid var(--cl-border);">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <p class="text-muted mb-2" style="font-size: var(--cl-sm); text-transform: uppercase; letter-spacing: 0.5px;">Total Assessments</p>
+                <h3 class="mb-0" style="font-size: var(--cl-h2); font-weight: var(--cl-font-bold); color: var(--cl-text);">
+                  {{ total_triages }}
+                </h3>
+              </div>
+              <div class="d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; border-radius: 50%; background: #eff6ff;">
+                <i class="fas fa-clipboard-list" style="color: var(--cl-blue); font-size: 1.25rem;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Last Assessment -->
+      <div class="col-md-4">
+        <div class="card h-100" style="border: 1px solid var(--cl-border);">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <p class="text-muted mb-2" style="font-size: var(--cl-sm); text-transform: uppercase; letter-spacing: 0.5px;">Last Assessment</p>
+                <h3 class="mb-0" style="font-size: var(--cl-base); font-weight: var(--cl-font-medium); color: var(--cl-text);">
+                  {% if last_interaction %}
+                    {{ last_interaction.updated_at|timesince }} ago
+                  {% else %}
+                    No assessments yet
+                  {% endif %}
+                </h3>
+              </div>
+              <div class="d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; border-radius: 50%; background: #f0fdf4;">
+                <i class="fas fa-clock" style="color: var(--cl-green); font-size: 1.25rem;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Latest Severity -->
+      <div class="col-md-4">
+        <div class="card h-100" style="border: 1px solid var(--cl-border);">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <p class="text-muted mb-2" style="font-size: var(--cl-sm); text-transform: uppercase; letter-spacing: 0.5px;">Latest Severity</p>
+                {% if last_interaction %}
+                  <span class="badge" style="padding:6px 12px; font-size: var(--cl-sm); border-radius:10px; background:
+                    {% if last_interaction.severity == 'Critical' %}var(--cl-red)
+                    {% elif last_interaction.severity == 'Severe' %}var(--cl-amber)
+                    {% elif last_interaction.severity == 'Moderate' %}var(--cl-teal)
+                    {% else %}var(--cl-green){% endif %}; color:white;">
+                    {{ last_interaction.severity|default:"Moderate" }}
+                  </span>
+                {% else %}
+                  <p class="mb-0" style="font-size: var(--cl-base); color: var(--cl-text-muted);">—</p>
+                {% endif %}
+              </div>
+              <div class="d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; border-radius: 50%; background: #fef2f2;">
+                <i class="fas fa-heart-pulse" style="color: var(--cl-red); font-size: 1.25rem;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Main Content Column -->
+      <div class="col-lg-8">
+        <!-- Quick Actions -->
+        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+          <div class="card-header bg-transparent border-bottom">
+            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text); font-weight: var(--cl-font-medium);">
+              Quick Actions
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <a href="{% url 'triage:chat' %}" class="card h-100 text-decoration-none" style="border: 2px solid var(--cl-blue); background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); transition: transform 0.2s, box-shadow 0.2s;">
+                  <div class="card-body d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center" style="width: 3.5rem; height: 3.5rem; border-radius: 12px; background: var(--cl-blue); flex-shrink: 0;">
+                      <i class="fas fa-stethoscope" style="color: white; font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1" style="color: var(--cl-text); font-weight: var(--cl-font-medium);">Start New Triage</h6>
+                      <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Get AI health assessment</p>
+                    </div>
+                  </div>
+                </a>
+              </div>
+              <div class="col-md-6">
+                <a href="{% url 'triage:history' %}" class="card h-100 text-decoration-none" style="border: 1px solid var(--cl-border); transition: transform 0.2s, box-shadow 0.2s;">
+                  <div class="card-body d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center" style="width: 3.5rem; height: 3.5rem; border-radius: 12px; background: #f3f4f6; flex-shrink: 0;">
+                      <i class="fas fa-history" style="color: var(--cl-text); font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1" style="color: var(--cl-text); font-weight: var(--cl-font-medium);">View History</h6>
+                      <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Past assessments</p>
+                    </div>
+                  </div>
+                </a>
+              </div>
+              <div class="col-md-6">
+                <a href="{% url 'doctors:index' %}" class="card h-100 text-decoration-none" style="border: 1px solid var(--cl-border); transition: transform 0.2s, box-shadow 0.2s;">
+                  <div class="card-body d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center" style="width: 3.5rem; height: 3.5rem; border-radius: 12px; background: #f3f4f6; flex-shrink: 0;">
+                      <i class="fas fa-map-marker-alt" style="color: var(--cl-text); font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1" style="color: var(--cl-text); font-weight: var(--cl-font-medium);">Find Care</h6>
+                      <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Nearby facilities</p>
+                    </div>
+                  </div>
+                </a>
+              </div>
+              <div class="col-md-6">
+                <a href="{% url 'appointments:index' %}" class="card h-100 text-decoration-none" style="border: 1px solid var(--cl-border); transition: transform 0.2s, box-shadow 0.2s;">
+                  <div class="card-body d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center" style="width: 3.5rem; height: 3.5rem; border-radius: 12px; background: #f3f4f6; flex-shrink: 0;">
+                      <i class="fas fa-calendar-check" style="color: var(--cl-text); font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1" style="color: var(--cl-text); font-weight: var(--cl-font-medium);">Book Appointment</h6>
+                      <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Schedule a visit</p>
+                    </div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card" style="border: 1px solid var(--cl-border);">
+          <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text); font-weight: var(--cl-font-medium);">
+              Recent Assessments
+            </h5>
+            {% if recent_interactions %}
+            <a href="{% url 'triage:history' %}" class="text-decoration-none" style="font-size: var(--cl-sm); color: var(--cl-blue);">
+              View All <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            {% if recent_interactions %}
+              <div class="d-flex flex-column gap-3">
+                {% for interaction in recent_interactions %}
+                <div class="card" style="border: 1px solid var(--cl-border); transition: box-shadow 0.2s;">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <div class="d-flex gap-2 align-items-center">
+                        <span class="badge" style="padding:4px 10px; font-size: var(--cl-xs); border-radius:8px; background:
+                          {% if interaction.severity == 'Critical' %}var(--cl-red)
+                          {% elif interaction.severity == 'Severe' %}var(--cl-amber)
+                          {% elif interaction.severity == 'Moderate' %}var(--cl-teal)
+                          {% else %}var(--cl-green){% endif %}; color:white;">
+                          {{ interaction.severity|default:"Moderate" }}
+                        </span>
+                        <span style="font-size: var(--cl-xs); color: var(--cl-text-muted);">
+                          {{ interaction.updated_at|date:"M d, Y" }} • {{ interaction.updated_at|date:"g:i A" }}
+                        </span>
+                      </div>
+                      <a href="{% url 'triage:detail' interaction.id %}" class="btn btn-sm btn-outline-primary" style="font-size: var(--cl-xs);">
+                        View
+                      </a>
+                    </div>
+                    <p class="mb-2" style="font-size: var(--cl-sm); color: var(--cl-text); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                      <strong>Symptoms:</strong> {{ interaction.symptoms_text|truncatewords:20 }}
+                    </p>
+                    {% if interaction.result.summary %}
+                    <p class="mb-0" style="font-size: var(--cl-xs); color: var(--cl-text-muted);">
+                      <strong>Summary:</strong> {{ interaction.result.summary|truncatewords:15 }}
+                    </p>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <!-- Empty State -->
+              <div class="text-center py-5">
+                <i class="fas fa-clipboard-list fa-3x mb-3" style="color: var(--cl-border);"></i>
+                <h5 class="mb-2" style="color: var(--cl-text);">No Assessments Yet</h5>
+                <p class="text-muted mb-4" style="max-width: 300px; margin-left: auto; margin-right: auto;">
+                  Start your first health assessment to track your symptoms.
+                </p>
+                <a href="{% url 'triage:chat' %}" class="btn btn-primary">
+                  <i class="fas fa-plus me-2"></i>Start First Assessment
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Column -->
+      <div class="col-lg-4">
+        <!-- Profile Summary -->
+        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+          <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text); font-weight: var(--cl-font-medium);">
+              Your Profile
+            </h5>
+            <a href="{% url 'profiles:edit' %}" class="text-decoration-none" style="font-size: var(--cl-sm); color: var(--cl-blue);">
+              <i class="fas fa-edit"></i>
+            </a>
+          </div>
+          <div class="card-body">
+            {% if profile %}
+              <div class="d-flex flex-column gap-3">
+                <div>
+                  <small style="color: var(--cl-text-muted); font-size: var(--cl-xs); text-transform: uppercase;">Age</small>
+                  <div style="font-size: var(--cl-base); color: var(--cl-text); font-weight: var(--cl-font-medium);">
+                    {{ profile.age|default:"Not provided" }} {% if profile.age %}years{% endif %}
+                  </div>
+                </div>
+                <div>
+                  <small style="color: var(--cl-text-muted); font-size: var(--cl-xs); text-transform: uppercase;">Weight</small>
+                  <div style="font-size: var(--cl-base); color: var(--cl-text); font-weight: var(--cl-font-medium);">
+                    {{ profile.weight|default:"Not provided" }} {% if profile.weight %}kg{% endif %}
+                  </div>
+                </div>
+                <div>
+                  <small style="color: var(--cl-text-muted); font-size: var(--cl-xs); text-transform: uppercase;">Allergies</small>
+                  <div style="font-size: var(--cl-sm); color: var(--cl-text);">
+                    {{ profile.allergies|default:"None reported"|truncatewords:10 }}
+                  </div>
+                </div>
+                <div>
+                  <small style="color: var(--cl-text-muted); font-size: var(--cl-xs); text-transform: uppercase;">Medical History</small>
+                  <div style="font-size: var(--cl-sm); color: var(--cl-text);">
+                    {{ profile.medical_history|default:"None reported"|truncatewords:15 }}
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <p class="text-muted mb-3">No profile information yet.</p>
+              <a href="{% url 'profiles:edit' %}" class="btn btn-primary btn-sm w-100">
+                Create Profile
+              </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Health Tips -->
+        <div class="card mb-4" style="border: 1px solid var(--cl-border); background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
+          <div class="card-body">
+            <div class="d-flex gap-3">
+              <i class="fas fa-lightbulb fa-2x" style="color: var(--cl-blue); flex-shrink: 0;"></i>
+              <div>
+                <h6 class="mb-2" style="color: var(--cl-text); font-weight: var(--cl-font-medium);">Health Tip</h6>
+                <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text);">
+                  Regular symptom tracking helps identify patterns and enables better healthcare decisions.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Emergency Notice -->
+        <div class="card" style="border: 2px solid var(--cl-red); background: #fef2f2;">
+          <div class="card-body">
+            <div class="d-flex gap-3">
+              <i class="fas fa-exclamation-triangle fa-lg" style="color: var(--cl-red); flex-shrink: 0; margin-top: 0.125rem;"></i>
+              <div>
+                <h6 class="mb-2" style="color: var(--cl-red); font-weight: var(--cl-font-medium);">Emergency?</h6>
+                <p class="mb-3" style="font-size: var(--cl-xs); color: var(--cl-text-muted);">
+                  If you're experiencing a medical emergency, call 911 immediately.
+                </p>
+                <button class="btn btn-danger btn-sm w-100">Call 911</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+a.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+</style>
+{% endblock %}
