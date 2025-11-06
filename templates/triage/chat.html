@@ -26,8 +26,7 @@
       <div class="col-lg-9">
         <div class="card h-100" style="border: 1px solid var(--cl-border); min-height: 600px; display: flex; flex-direction: column;">
           <!-- Messages Area -->
-          <div class="card-body flex-grow-1 overflow-auto p-4" style="max-height: 500px;">
-            {% if not submitted_symptoms and not result %}
+          <div id="messagesContainer" class="card-body flex-grow-1 overflow-auto p-4" style="max-height: 500px;">
             <!-- Default assistant greeting -->
             <div class="mb-4">
               <div class="d-flex align-items-start gap-3">
@@ -44,70 +43,11 @@
                 </div>
               </div>
             </div>
-            {% endif %}
-            {% if submitted_symptoms %}
-            <!-- User message -->
-            <div class="mb-4">
-              <div class="d-flex align-items-start gap-3" style="justify-content: flex-end;">
-                <div class="flex-grow-1"></div>
-                <div class="card p-3" style="background: var(--cl-muted-bg); border: 1px solid var(--cl-border); border-radius: var(--cl-radius-lg); max-width: 80%;">
-                  <small class="d-block mb-2" style="color: var(--cl-text-muted); text-align:right;">You</small>
-                  <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text); text-align:right;">{{ submitted_symptoms }}</p>
-                </div>
-              </div>
-            </div>
-            {% endif %}
-
-            {% if result %}
-            <!-- Assistant message -->
-            <div class="mb-4">
-              <div class="d-flex align-items-start gap-3">
-                <div class="d-flex align-items-center justify-content-center" style="width: 2rem; height: 2rem; border-radius: 50%; background: var(--cl-blue); color: white; flex-shrink: 0;">
-                  <i class="fas fa-robot fa-sm"></i>
-                </div>
-                <div class="flex-grow-1">
-                  <div class="card p-3" style="background: white; border: 1px solid var(--cl-border); border-radius: var(--cl-radius-lg); max-width: 80%;">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                      <small class="d-block" style="color: var(--cl-text-muted);">AI Assistant</small>
-                      <span class="badge" style="padding:4px 8px;border-radius:10px;background:
-                        {% if result.severity == 'Critical' %}var(--cl-red)
-                        {% elif result.severity == 'Severe' %}var(--cl-amber)
-                        {% elif result.severity == 'Moderate' %}var(--cl-teal)
-                        {% else %}var(--cl-green){% endif %}; color:white;">{{ result.severity|default:"Moderate" }}</span>
-                    </div>
-                    <div style="font-size: var(--cl-sm); color: var(--cl-text);">
-                      <p class="mb-2"><strong>Summary:</strong> {{ result.summary }}</p>
-                      {% if result.red_flags %}
-                        <p class="mb-2"><strong>Red flags:</strong></p>
-                        <ul class="mb-2" style="margin-left: 1rem;">
-                          {% for rf in result.red_flags %}
-                          <li>{{ rf }}</li>
-                          {% endfor %}
-                        </ul>
-                      {% endif %}
-                      {% if result.differential %}
-                        <p class="mb-2"><strong>Possible causes (not a diagnosis):</strong></p>
-                        <ul class="mb-2" style="margin-left: 1rem;">
-                          {% for d in result.differential %}
-                          <li>{{ d }}</li>
-                          {% endfor %}
-                        </ul>
-                      {% endif %}
-                      {% if result.advice %}
-                        <div class="alert info mb-0"><strong>Advice:</strong> {{ result.advice }}</div>
-                      {% endif %}
-                      <p class="mt-2 text-muted" style="font-size: var(--cl-xs);">This is informational only and not a medical diagnosis.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {% endif %}
           </div>
 
           <!-- Input Area -->
           <div class="border-top p-3" style="border-color: var(--cl-border);">
-            <form id="triageForm" class="d-flex gap-2" method="post" onsubmit="const btn=this.querySelector('button[type=submit]'); if(btn){ btn.disabled=true; btn.dataset.originalText=btn.textContent; btn.textContent='Generating…'; }">
+            <form id="triageForm" class="d-flex gap-2">
               {% csrf_token %}
               <textarea id="symptoms" name="symptoms" rows="2" class="form-control" placeholder="Describe your symptoms..." style="resize: none; border: 1px solid var(--cl-border);"></textarea>
               <button type="submit" class="btn btn-primary" style="height: fit-content; align-self: flex-end;">
@@ -149,17 +89,9 @@
                 Severity Assessment
               </h5>
             </div>
-            <div class="card-body text-center">
-              {% if result %}
-                <span class="badge" style="padding:6px 10px;border-radius:10px;background:
-                  {% if result.severity == 'Critical' %}var(--cl-red)
-                  {% elif result.severity == 'Severe' %}var(--cl-amber)
-                  {% elif result.severity == 'Moderate' %}var(--cl-teal)
-                  {% else %}var(--cl-green){% endif %}; color:white;">{{ result.severity|default:"Moderate" }}</span>
-              {% else %}
-                <i class="fas fa-info-circle fa-3x mb-3" style="color: var(--cl-border);"></i>
-                <p class="text-muted mb-0" style="font-size: var(--cl-sm);">Severity will be assessed after you submit</p>
-              {% endif %}
+            <div id="severityDisplay" class="card-body text-center">
+              <i class="fas fa-info-circle fa-3x mb-3" style="color: var(--cl-border);"></i>
+              <p class="text-muted mb-0" style="font-size: var(--cl-sm);">Severity will be assessed after you submit</p>
             </div>
           </div>
 
@@ -203,21 +135,230 @@
 document.addEventListener('DOMContentLoaded', function() {
   const textarea = document.getElementById('symptoms');
   const form = document.getElementById('triageForm');
+  const messagesContainer = document.getElementById('messagesContainer');
+  const severityDisplay = document.getElementById('severityDisplay');
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-  if (textarea && form) {
-    textarea.addEventListener('keydown', function(e) {
-      // Check if Enter key is pressed without Shift
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault(); // Prevent new line
-
-        // Check if there's content to submit
-        if (textarea.value.trim()) {
-          form.requestSubmit(); // Submit the form
-        }
-      }
-      // Shift + Enter will create a new line (default behavior)
-    });
+  // Function to scroll to bottom of messages
+  function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
+
+  // Function to add user message
+  function addUserMessage(text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'mb-4';
+    messageDiv.innerHTML = `
+      <div class="d-flex align-items-start gap-3" style="justify-content: flex-end;">
+        <div class="flex-grow-1"></div>
+        <div class="card p-3" style="background: var(--cl-muted-bg); border: 1px solid var(--cl-border); border-radius: var(--cl-radius-lg); max-width: 80%;">
+          <small class="d-block mb-2" style="color: var(--cl-text-muted); text-align:right;">You</small>
+          <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text); text-align:right;">${escapeHtml(text)}</p>
+        </div>
+      </div>
+    `;
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  // Function to add loading message
+  function addLoadingMessage() {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'mb-4';
+    messageDiv.id = 'loadingMessage';
+    messageDiv.innerHTML = `
+      <div class="d-flex align-items-start gap-3">
+        <div class="d-flex align-items-center justify-content-center" style="width: 2rem; height: 2rem; border-radius: 50%; background: var(--cl-blue); color: white; flex-shrink: 0;">
+          <i class="fas fa-robot fa-sm"></i>
+        </div>
+        <div class="flex-grow-1">
+          <div class="card p-3" style="background: white; border: 1px solid var(--cl-border); border-radius: var(--cl-radius-lg); max-width: 80%;">
+            <small class="d-block mb-2" style="color: var(--cl-text-muted);">AI Assistant</small>
+            <div class="d-flex gap-2 align-items-center">
+              <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Analyzing your symptoms...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  // Function to remove loading message
+  function removeLoadingMessage() {
+    const loadingMsg = document.getElementById('loadingMessage');
+    if (loadingMsg) {
+      loadingMsg.remove();
+    }
+  }
+
+  // Function to get severity color
+  function getSeverityColor(severity) {
+    switch(severity) {
+      case 'Critical': return 'var(--cl-red)';
+      case 'Severe': return 'var(--cl-amber)';
+      case 'Moderate': return 'var(--cl-teal)';
+      default: return 'var(--cl-green)';
+    }
+  }
+
+  // Function to add AI response
+  function addAIResponse(result) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'mb-4';
+
+    let redFlagsHtml = '';
+    if (result.red_flags && result.red_flags.length > 0) {
+      redFlagsHtml = `
+        <p class="mb-2"><strong>Red flags:</strong></p>
+        <ul class="mb-2" style="margin-left: 1rem;">
+          ${result.red_flags.map(rf => `<li>${escapeHtml(rf)}</li>`).join('')}
+        </ul>
+      `;
+    }
+
+    let differentialHtml = '';
+    if (result.differential && result.differential.length > 0) {
+      differentialHtml = `
+        <p class="mb-2"><strong>Possible causes (not a diagnosis):</strong></p>
+        <ul class="mb-2" style="margin-left: 1rem;">
+          ${result.differential.map(d => `<li>${escapeHtml(d)}</li>`).join('')}
+        </ul>
+      `;
+    }
+
+    let adviceHtml = '';
+    if (result.advice) {
+      adviceHtml = `<div class="alert info mb-0"><strong>Advice:</strong> ${escapeHtml(result.advice)}</div>`;
+    }
+
+    messageDiv.innerHTML = `
+      <div class="d-flex align-items-start gap-3">
+        <div class="d-flex align-items-center justify-content-center" style="width: 2rem; height: 2rem; border-radius: 50%; background: var(--cl-blue); color: white; flex-shrink: 0;">
+          <i class="fas fa-robot fa-sm"></i>
+        </div>
+        <div class="flex-grow-1">
+          <div class="card p-3" style="background: white; border: 1px solid var(--cl-border); border-radius: var(--cl-radius-lg); max-width: 80%;">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <small class="d-block" style="color: var(--cl-text-muted);">AI Assistant</small>
+              <span class="badge" style="padding:4px 8px;border-radius:10px;background:${getSeverityColor(result.severity)}; color:white;">${escapeHtml(result.severity || 'Moderate')}</span>
+            </div>
+            <div style="font-size: var(--cl-sm); color: var(--cl-text);">
+              <p class="mb-2"><strong>Summary:</strong> ${escapeHtml(result.summary)}</p>
+              ${redFlagsHtml}
+              ${differentialHtml}
+              ${adviceHtml}
+              <p class="mt-2 text-muted" style="font-size: var(--cl-xs);">This is informational only and not a medical diagnosis.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+
+    // Update severity display
+    updateSeverityDisplay(result.severity);
+  }
+
+  // Function to update severity display in sidebar
+  function updateSeverityDisplay(severity) {
+    severityDisplay.innerHTML = `
+      <span class="badge" style="padding:6px 10px;border-radius:10px;background:${getSeverityColor(severity)}; color:white;">${escapeHtml(severity || 'Moderate')}</span>
+    `;
+  }
+
+  // Function to show error message
+  function showError(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'mb-4';
+    messageDiv.innerHTML = `
+      <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>${escapeHtml(message)}
+      </div>
+    `;
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  // Escape HTML to prevent XSS
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Handle form submission
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const symptoms = textarea.value.trim();
+    if (!symptoms) return;
+
+    // Disable form
+    const submitBtn = form.querySelector('button[type=submit]');
+    submitBtn.disabled = true;
+    textarea.disabled = true;
+
+    // Add user message immediately
+    addUserMessage(symptoms);
+
+    // Clear textarea
+    textarea.value = '';
+
+    // Add loading indicator
+    addLoadingMessage();
+
+    try {
+      // Make API request
+      const response = await fetch('{% url "triage:chat_api" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({
+          'symptoms': symptoms
+        })
+      });
+
+      // Remove loading message
+      removeLoadingMessage();
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Add AI response
+        addAIResponse(data.result);
+      } else {
+        // Show error
+        showError(data.error || 'An error occurred. Please try again.');
+      }
+    } catch (error) {
+      removeLoadingMessage();
+      showError('Network error. Please check your connection and try again.');
+      console.error('Error:', error);
+    } finally {
+      // Re-enable form
+      submitBtn.disabled = false;
+      textarea.disabled = false;
+      textarea.focus();
+    }
+  });
+
+  // Handle Enter key for submission
+  textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (textarea.value.trim()) {
+        form.dispatchEvent(new Event('submit'));
+      }
+    }
+  });
 });
 </script>
 {% endblock %}
