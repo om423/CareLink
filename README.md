@@ -1,11 +1,11 @@
 # CareLink — AI-Enhanced Telehealth Triage (Scaffold Only)
 
-**Status:** Scaffold ready. **No user stories implemented yet.**
+**Status:** User Story #2 implemented (AI triage at `/triage/chat/`).
 
 ## Quickstart
 1. `python -m venv venv && source venv/bin/activate`
 2. `pip install -r requirements.txt`
-3. Copy `.env.example` to `.env` and edit as needed (keep defaults for now).
+3. (Optional for live AI) Set `GEMINI_API_KEY` in your environment (e.g., export in shell or a `.env` via your preferred loader). Without a key, the page works but won’t call Gemini.
 4. `python manage.py migrate`
 5. `python manage.py runserver` (uses `carelink.settings.dev`)
 
@@ -21,7 +21,8 @@
 - Pytest + pytest-django
 - Pre-commit hooks (optional)
 
+## Environment
+- `GEMINI_API_KEY` (optional): required to make live Gemini requests for AI triage. The app shows a friendly error without it and tests run offline via monkeypatching.
+
 ## Next (later)
-- Implement user stories one by one
-- Connect OpenAI & Maps via service classes
-- Add data models & migrations
+- Add further user stories and polish as needed
