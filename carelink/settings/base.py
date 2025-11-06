@@ -18,6 +18,7 @@ if env_file.exists():
 DEBUG = env("DJANGO_DEBUG")
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 ALLOWED_HOSTS = [h.strip() for h in env("DJANGO_ALLOWED_HOSTS").split(",")]
+GEMINI_API_KEY = env("GEMINI_API_KEY", default=None)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
