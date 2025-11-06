@@ -1,32 +1,191 @@
+@import url('./tokens.css');
+
+/* Navbar */
 .navbar {
   background: white;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--cl-border);
+  padding: 1rem 0;
 }
-.navbar-inner {
+
+.navbar-brand {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 24px;
+  gap: 0.5rem;
+  text-decoration: none;
+  font-weight: var(--cl-font-semibold);
+  font-size: 1.25rem;
+  color: var(--cl-blue);
 }
-.logo { font-weight: 700; letter-spacing: .2px; }
-.logo a { color: var(--cl-blue); }
-.nav-spacer { flex: 1; }
 
+.navbar-brand:hover {
+  color: var(--cl-blue);
+}
+
+.navbar-brand-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--cl-radius);
+  background: var(--cl-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.nav-link {
+  color: var(--cl-text-muted);
+  font-weight: var(--cl-font-medium);
+  padding: 0.5rem 1rem;
+  border-radius: var(--cl-radius);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  color: var(--cl-blue);
+  background: var(--cl-muted-bg);
+}
+
+.nav-link.active {
+  color: var(--cl-blue);
+  background: var(--cl-muted-bg);
+}
+
+/* Footer */
 .footer {
-  border-top: 1px solid #e5e7eb;
-  padding: 24px;
-  color: #667085;
   background: white;
-  margin-top: auto;
+  border-top: 1px solid var(--cl-border);
+  padding: 3rem 0 2rem;
+  margin-top: 4rem;
 }
 
-.alert {
-  padding: 10px 14px;
-  border-radius: 10px;
-  margin: 8px 0;
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
-.alert.info { background: #e6f4ff; border-left: 3px solid var(--cl-blue); }
-.alert.success { background: #e8f5e9; border-left: 3px solid var(--cl-green); }
-.alert.warn { background: #fff8e1; border-left: 3px solid var(--cl-amber); }
-.alert.error { background: #fdecea; border-left: 3px solid var(--cl-red); }
 
+.footer-section h4 {
+  font-size: var(--cl-h4);
+  font-weight: var(--cl-font-medium);
+  color: var(--cl-text);
+  margin-bottom: 1rem;
+}
+
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-section ul li {
+  margin-bottom: 0.5rem;
+}
+
+.footer-section a {
+  color: var(--cl-text-muted);
+  font-size: var(--cl-sm);
+  transition: color 0.2s ease;
+}
+
+.footer-section a:hover {
+  color: var(--cl-blue);
+}
+
+.footer-bottom {
+  border-top: 1px solid var(--cl-border);
+  padding-top: 2rem;
+  text-align: center;
+  color: var(--cl-text-muted);
+  font-size: var(--cl-sm);
+}
+
+/* Icon containers */
+.icon-container {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--cl-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.icon-container-blue {
+  background: var(--cl-muted-bg);
+  color: var(--cl-blue);
+}
+
+.icon-container-green {
+  background: var(--cl-green-bg);
+  color: var(--cl-green);
+}
+
+.icon-container-teal {
+  background: var(--cl-blue-bg);
+  color: var(--cl-teal);
+}
+
+/* Hero section */
+.hero-section {
+  padding: 4rem 0;
+}
+
+.hero-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--cl-muted-bg);
+  color: var(--cl-blue);
+  border-radius: 9999px;
+  font-size: var(--cl-sm);
+  font-weight: var(--cl-font-medium);
+  margin-bottom: 1.5rem;
+}
+
+.hero-title {
+  font-size: var(--cl-h1);
+  font-weight: var(--cl-font-semibold);
+  color: var(--cl-text);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.hero-title .text-primary {
+  color: var(--cl-blue);
+}
+
+.hero-description {
+  font-size: 1.125rem;
+  color: var(--cl-text-muted);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+/* Feature cards */
+.feature-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .footer-content {
+    grid-template-columns: 1fr;
+  }
+}
