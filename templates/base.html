@@ -19,70 +19,101 @@
   </head>
   <body class="d-flex flex-column" style="background: var(--cl-bg); font-family: 'Inter', sans-serif;">
     <!-- Header -->
-    <header class="navbar" style="background: white; border-bottom: 1px solid var(--cl-border);">
+    <nav class="navbar navbar-expand-lg" style="background: white; border-bottom: 1px solid var(--cl-border);">
       <div class="container">
-        <div class="d-flex align-items-center justify-content-between w-100 py-3">
-          <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none" href="{% url 'home:index' %}">
-            <div class="navbar-brand-icon d-flex align-items-center justify-content-center" style="width: 2.5rem; height: 2.5rem; border-radius: var(--cl-radius); background: var(--cl-blue); color: white;">
-              <i class="fas fa-heartbeat"></i>
-            </div>
-            <div>
-              <h1 class="m-0" style="font-size: 1.25rem; font-weight: var(--cl-font-semibold); color: var(--cl-blue);">CareLink</h1>
-              {% if not user.is_authenticated %}
-                <p class="m-0" style="font-size: 0.75rem; color: var(--cl-text-muted);">AI-Enhanced Telehealth Triage</p>
-              {% endif %}
-            </div>
-          </a>
+        <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none" href="{% url 'home:index' %}">
+          <div class="navbar-brand-icon d-flex align-items-center justify-content-center" style="width: 2.5rem; height: 2.5rem; border-radius: var(--cl-radius); background: var(--cl-blue); color: white;">
+            <i class="fas fa-heartbeat"></i>
+          </div>
+          <div>
+            <h1 class="m-0" style="font-size: 1.25rem; font-weight: var(--cl-font-semibold); color: var(--cl-blue);">CareLink</h1>
+            {% if not user.is_authenticated %}
+              <p class="m-0" style="font-size: 0.75rem; color: var(--cl-text-muted);">AI-Enhanced Telehealth Triage</p>
+            {% endif %}
+          </div>
+        </a>
 
-          <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#carelinkNav" aria-controls="carelinkNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#carelinkNav" aria-controls="carelinkNav" aria-expanded="false" aria-label="Toggle navigation" style="border: 1px solid var(--cl-border);">
+          <span class="navbar-toggler-icon"></span>
+        </button>
 
-          <div class="collapse navbar-collapse" id="carelinkNav">
-            <div class="navbar-nav ms-auto d-flex align-items-center gap-2">
+        <div class="collapse navbar-collapse" id="carelinkNav">
+          <ul class="navbar-nav ms-auto d-flex align-items-center gap-2 mb-0">
+            <li class="nav-item">
               <a class="nav-link" href="{% url 'home:index' %}">
                 <i class="fas fa-home me-1"></i>Home
               </a>
-              {% if user.is_authenticated %}
-                <a class="nav-link" href="{% url 'triage:index' %}">
-                  <i class="fas fa-stethoscope me-1"></i>Triage
-                </a>
-                <a class="nav-link" href="{% url 'appointments:index' %}">
-                  <i class="fas fa-calendar-check me-1"></i>Appointments
-                </a>
-                <a class="nav-link" href="{% url 'profiles:index' %}">
-                  <i class="fas fa-user-md me-1"></i>My Profile
-                </a>
-                <a class="nav-link" href="{% url 'doctors:index' %}">
-                  <i class="fas fa-user-doctor me-1"></i>Find a Doctor
-                </a>
-                <div class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-user me-1"></i>{{ user.username }}
+            </li>
+            {% if user.is_authenticated %}
+              {% if user.patient_profile.role == 'patient' %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'triage:index' %}">
+                    <i class="fas fa-stethoscope me-1"></i>Triage
                   </a>
-                  <ul class="dropdown-menu dropdown-menu-end" style="border-radius: var(--cl-radius-lg); border: 1px solid var(--cl-border); box-shadow: var(--cl-shadow-lg);">
-                    <li><a class="dropdown-item" href="{% url 'accounts:index' %}">
-                      <i class="fas fa-cog me-2"></i>Account Settings
-                    </a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#">
-                      <i class="fas fa-sign-out-alt me-2"></i>Logout
-                    </a></li>
-                  </ul>
-                </div>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'appointments:index' %}">
+                    <i class="fas fa-calendar-check me-1"></i>Appointments
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'profiles:edit' %}">
+                    <i class="fas fa-user-md me-1"></i>My Profile
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'doctors:find_doctor' %}">
+                    <i class="fas fa-user-doctor me-1"></i>Find a Doctor
+                  </a>
+                </li>
+              {% elif user.patient_profile.role == 'doctor' %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'doctors:index' %}">
+                    <i class="fas fa-hospital-user me-1"></i>Doctor Dashboard
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'profiles:edit' %}">
+                    <i class="fas fa-user-md me-1"></i>My Profile
+                  </a>
+                </li>
               {% else %}
-                <a class="nav-link" href="{% url 'accounts:index' %}">
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'profiles:edit' %}">
+                    <i class="fas fa-user-md me-1"></i>My Profile
+                  </a>
+                </li>
+              {% endif %}
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fas fa-user me-1"></i>{{ user.username }}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" style="border-radius: var(--cl-radius-lg); border: 1px solid var(--cl-border); box-shadow: var(--cl-shadow-lg);">
+                  <li><a class="dropdown-item" href="{% url 'accounts:index' %}">
+                    <i class="fas fa-cog me-2"></i>Account Settings
+                  </a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                  </a></li>
+                </ul>
+              </li>
+            {% else %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:login' %}">
                   <i class="fas fa-sign-in-alt me-1"></i>Login
                 </a>
-                <a class="btn btn-outline-primary" href="{% url 'accounts:index' %}">
+              </li>
+              <li class="nav-item">
+                <a class="btn btn-outline-primary" href="{% url 'accounts:register' %}" style="white-space: nowrap;">
                   <i class="fas fa-user-plus me-1"></i>Sign Up
                 </a>
-              {% endif %}
-            </div>
-          </div>
+              </li>
+            {% endif %}
+          </ul>
         </div>
       </div>
-    </header>
+    </nav>
     <!-- /Header -->
 
     <main class="flex-grow-1">

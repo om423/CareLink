@@ -32,6 +32,18 @@
   color: white;
 }
 
+.navbar-nav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+}
+
 .nav-link {
   color: var(--cl-text-muted);
   font-weight: var(--cl-font-medium);
@@ -52,6 +64,21 @@
 .nav-link.active {
   color: var(--cl-blue);
   background: var(--cl-muted-bg);
+}
+
+/* Ensure navbar-collapse shows on desktop */
+@media (min-width: 992px) {
+  .navbar-collapse {
+    display: flex !important;
+  }
+  
+  .navbar-collapse.collapse {
+    display: flex !important;
+  }
+  
+  .navbar-nav {
+    flex-direction: row;
+  }
 }
 
 /* Footer */
@@ -187,5 +214,10 @@
   
   .footer-content {
     grid-template-columns: 1fr;
+  }
+  
+  .navbar-nav {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
