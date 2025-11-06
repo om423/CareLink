@@ -1,16 +1,210 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container py-5">
-  <div class="row">
-    <div class="col-lg-10 mx-auto">
-      <div class="card">
-        <div class="card-header">
-          <h3 class="mb-0">
-            <i class="fas fa-user-md me-2"></i>Profiles
-          </h3>
+<div style="background: var(--cl-bg); min-height: calc(100vh - 200px);">
+  <!-- Page Header -->
+  <header style="background: white; border-bottom: 1px solid var(--cl-border);">
+    <div class="container py-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <a href="{% url 'home:index' %}" class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-text-muted);">
+            <i class="fas fa-arrow-left"></i>
+          </a>
+          <div>
+            <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">My Profile</h2>
+            <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Manage your personal information</p>
+          </div>
         </div>
-        <div class="card-body">
-          <p class="text-muted">Profile management functionality coming soon...</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container py-4">
+    <div class="row">
+      <div class="col-lg-10 mx-auto">
+        <!-- Profile Header -->
+        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-4">
+              <div class="d-flex align-items-center justify-content-center" style="width: 6rem; height: 6rem; border-radius: 50%; background: linear-gradient(135deg, var(--cl-blue) 0%, var(--cl-teal) 100%); color: white;">
+                <i class="fas fa-user fa-3x"></i>
+              </div>
+              <div class="flex-grow-1">
+                <h2 class="mb-1" style="font-size: var(--cl-h2); color: var(--cl-text);">{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}Patient Name{% endif %}</h2>
+                <p class="text-muted mb-2">{% if user.is_authenticated %}{{ user.email }}{% else %}email@example.com{% endif %}</p>
+                <button class="btn btn-outline-primary btn-sm">
+                  Change Photo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" role="tablist" style="border-bottom: 1px solid var(--cl-border);">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" style="border: none; border-bottom: 2px solid var(--cl-blue); color: var(--cl-blue); font-weight: var(--cl-font-medium);">
+              Basic Info
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="medical-tab" data-bs-toggle="tab" data-bs-target="#medical" type="button" role="tab" style="border: none; color: var(--cl-text-muted);">
+              Medical History
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" style="border: none; color: var(--cl-text-muted);">
+              Settings
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+          <!-- Basic Info Tab -->
+          <div class="tab-pane fade show active" id="basic" role="tabpanel">
+            <div class="card" style="border: 1px solid var(--cl-border);">
+              <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">Personal Information</h5>
+                <small class="text-muted">Update your personal details and contact information</small>
+              </div>
+              <div class="card-body">
+                <form>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label" style="color: var(--cl-text);">First Name</label>
+                      <input type="text" class="form-control" value="{% if user.is_authenticated %}{{ user.first_name|default:'Sarah' }}{% else %}Sarah{% endif %}">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" style="color: var(--cl-text);">Last Name</label>
+                      <input type="text" class="form-control" value="{% if user.is_authenticated %}{{ user.last_name|default:'Johnson' }}{% else %}Johnson{% endif %}">
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label" style="color: var(--cl-text);">Date of Birth</label>
+                      <input type="date" class="form-control" value="1990-05-15">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" style="color: var(--cl-text);">Gender</label>
+                      <input type="text" class="form-control" value="Female">
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label" style="color: var(--cl-text);">Phone Number</label>
+                      <input type="tel" class="form-control" value="(555) 123-4567">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" style="color: var(--cl-text);">Email</label>
+                      <input type="email" class="form-control" value="{% if user.is_authenticated %}{{ user.email }}{% else %}sarah.johnson@email.com{% endif %}">
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" style="color: var(--cl-text);">Address</label>
+                    <input type="text" class="form-control" value="123 Main Street, San Francisco, CA 94102">
+                  </div>
+                  <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Medical History Tab -->
+          <div class="tab-pane fade" id="medical" role="tabpanel">
+            <div class="card mb-3" style="border: 1px solid var(--cl-border);">
+              <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">Medical Information</h5>
+                <small class="text-muted">Keep your medical history up to date for better care</small>
+              </div>
+              <div class="card-body">
+                <form>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label" style="color: var(--cl-text);">Height (cm)</label>
+                      <input type="number" class="form-control" value="165">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" style="color: var(--cl-text);">Weight (kg)</label>
+                      <input type="number" class="form-control" value="60">
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" style="color: var(--cl-text);">Blood Type</label>
+                    <input type="text" class="form-control" value="A+">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" style="color: var(--cl-text);">Allergies</label>
+                    <textarea class="form-control" rows="3" placeholder="List any allergies (medications, foods, environmental)">Penicillin, Peanuts</textarea>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" style="color: var(--cl-text);">Chronic Conditions</label>
+                    <textarea class="form-control" rows="3" placeholder="List any ongoing medical conditions">Asthma</textarea>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" style="color: var(--cl-text);">Current Medications</label>
+                    <textarea class="form-control" rows="3" placeholder="List medications you're currently taking">Albuterol inhaler as needed</textarea>
+                  </div>
+                  <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Medical Information
+                  </button>
+                </form>
+              </div>
+            </div>
+            <div class="card" style="border: 2px solid var(--cl-amber); background: #fffbeb;">
+              <div class="card-body">
+                <div class="d-flex gap-3">
+                  <i class="fas fa-exclamation-circle fa-lg" style="color: var(--cl-amber); flex-shrink: 0; margin-top: 0.125rem;"></i>
+                  <div>
+                    <h6 class="mb-1" style="color: var(--cl-amber); font-weight: var(--cl-font-medium);">Important</h6>
+                    <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
+                      Always keep your medical information current. This helps healthcare providers give you the best possible care.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Settings Tab -->
+          <div class="tab-pane fade" id="settings" role="tabpanel">
+            <div class="card mb-3" style="border: 1px solid var(--cl-border);">
+              <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">Account Settings</h5>
+                <small class="text-muted">Manage your account security and preferences</small>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label" style="color: var(--cl-text);">Email Address</label>
+                  <div class="d-flex gap-2">
+                    <input type="email" class="form-control" value="{% if user.is_authenticated %}{{ user.email }}{% else %}sarah.johnson@email.com{% endif %}">
+                    <button class="btn btn-outline-primary">
+                      <i class="fas fa-envelope me-2"></i>Change
+                    </button>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" style="color: var(--cl-text);">Password</label>
+                  <button class="btn btn-outline-secondary w-100 text-start">
+                    <i class="fas fa-lock me-2"></i>Change Password
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="card" style="border: 2px solid var(--cl-red);">
+              <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-red);">Danger Zone</h5>
+                <small class="text-muted">Irreversible actions for your account</small>
+              </div>
+              <div class="card-body">
+                <button class="btn btn-danger">
+                  Delete Account
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

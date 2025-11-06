@@ -1,16 +1,188 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container py-5">
-  <div class="row">
-    <div class="col-lg-10 mx-auto">
-      <div class="card">
-        <div class="card-header">
-          <h3 class="mb-0">
-            <i class="fas fa-calendar-check me-2"></i>Appointments
-          </h3>
+<div style="background: var(--cl-bg); min-height: calc(100vh - 200px);">
+  <!-- Page Header -->
+  <header style="background: white; border-bottom: 1px solid var(--cl-border);">
+    <div class="container py-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <a href="{% url 'home:index' %}" class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-text-muted);">
+            <i class="fas fa-arrow-left"></i>
+          </a>
+          <div>
+            <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">Book Appointment</h2>
+            <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Find and schedule with healthcare professionals</p>
+          </div>
         </div>
-        <div class="card-body">
-          <p class="text-muted">Appointment management functionality coming soon...</p>
+        <button class="btn btn-outline-primary btn-sm">
+          <i class="fas fa-filter me-2"></i>Filters
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container py-4">
+    <div class="row g-4">
+      <!-- Doctors List -->
+      <div class="col-lg-8">
+        <h3 class="mb-4" style="font-size: var(--cl-h3); color: var(--cl-text);">Available Doctors</h3>
+        <div class="d-flex flex-column gap-3 mb-4">
+          <!-- Doctor Card 1 -->
+          <div class="card" style="border: 1px solid var(--cl-border);">
+            <div class="card-body">
+              <div class="d-flex gap-3">
+                <div class="d-flex align-items-center justify-content-center" style="width: 5rem; height: 5rem; border-radius: var(--cl-radius-lg); background: var(--cl-muted-bg); flex-shrink: 0;">
+                  <i class="fas fa-user-md fa-2x" style="color: var(--cl-blue);"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <h5 class="mb-1" style="font-size: var(--cl-h4); color: var(--cl-text);">Dr. Michael Chen</h5>
+                      <p class="text-muted mb-0" style="font-size: var(--cl-sm);">General Practice</p>
+                    </div>
+                    <span class="badge bg-success">★ 4.9</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-3 mb-2" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
+                    <span><i class="fas fa-map-marker-alt me-1"></i>0.8 mi</span>
+                    <span><i class="fas fa-user me-1"></i>234 reviews</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
+                      <i class="fas fa-clock me-1" style="color: var(--cl-teal);"></i>Next: Nov 7, 2025 10:00 AM
+                    </span>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-video me-1"></i>Virtual
+                      </button>
+                      <button class="btn btn-primary btn-sm">
+                        Book Now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Doctor Card 2 -->
+          <div class="card" style="border: 1px solid var(--cl-border);">
+            <div class="card-body">
+              <div class="d-flex gap-3">
+                <div class="d-flex align-items-center justify-content-center" style="width: 5rem; height: 5rem; border-radius: var(--cl-radius-lg); background: var(--cl-muted-bg); flex-shrink: 0;">
+                  <i class="fas fa-user-md fa-2x" style="color: var(--cl-blue);"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <h5 class="mb-1" style="font-size: var(--cl-h4); color: var(--cl-text);">Dr. Sarah Williams</h5>
+                      <p class="text-muted mb-0" style="font-size: var(--cl-sm);">Internal Medicine</p>
+                    </div>
+                    <span class="badge bg-success">★ 4.8</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-3 mb-2" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
+                    <span><i class="fas fa-map-marker-alt me-1"></i>1.2 mi</span>
+                    <span><i class="fas fa-user me-1"></i>189 reviews</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
+                      <i class="fas fa-clock me-1" style="color: var(--cl-teal);"></i>Next: Nov 7, 2025 02:30 PM
+                    </span>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-video me-1"></i>Virtual
+                      </button>
+                      <button class="btn btn-primary btn-sm">
+                        Book Now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time Slots -->
+        <div class="card" style="border: 1px solid var(--cl-border);">
+          <div class="card-header bg-transparent border-bottom">
+            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">Available Time Slots</h5>
+            <small class="text-muted">Select a convenient time for your appointment</small>
+          </div>
+          <div class="card-body">
+            <div class="row g-2">
+              <div class="col-md-3 col-6">
+                <button class="btn btn-outline-secondary w-100">09:00 AM</button>
+              </div>
+              <div class="col-md-3 col-6">
+                <button class="btn btn-outline-secondary w-100">09:30 AM</button>
+              </div>
+              <div class="col-md-3 col-6">
+                <button class="btn btn-primary w-100">10:00 AM</button>
+              </div>
+              <div class="col-md-3 col-6">
+                <button class="btn btn-outline-secondary w-100">10:30 AM</button>
+              </div>
+              <div class="col-md-3 col-6">
+                <button class="btn btn-outline-secondary w-100">11:00 AM</button>
+              </div>
+              <div class="col-md-3 col-6">
+                <button class="btn btn-outline-secondary w-100">02:00 PM</button>
+              </div>
+              <div class="col-md-3 col-6">
+                <button class="btn btn-outline-secondary w-100">02:30 PM</button>
+              </div>
+              <div class="col-md-3 col-6">
+                <button class="btn btn-outline-secondary w-100">03:00 PM</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <div class="d-flex flex-column gap-3">
+          <!-- Calendar -->
+          <div class="card" style="border: 1px solid var(--cl-border);">
+            <div class="card-header bg-transparent border-bottom">
+              <h5 class="mb-0 d-flex align-items-center gap-2" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                <i class="fas fa-calendar" style="color: var(--cl-blue);"></i>
+                Select Date
+              </h5>
+            </div>
+            <div class="card-body text-center">
+              <p class="text-muted mb-3">Calendar widget coming soon...</p>
+              <input type="date" class="form-control" value="2025-11-07">
+            </div>
+          </div>
+
+          <!-- Booking Summary -->
+          <div class="card" style="border: 1px solid var(--cl-border); background: linear-gradient(to bottom right, var(--cl-muted-bg), white);">
+            <div class="card-header bg-transparent border-bottom">
+              <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">Booking Summary</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex flex-column gap-2">
+                <div class="d-flex justify-content-between p-2 bg-white rounded">
+                  <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Appointment Type</span>
+                  <span style="font-size: var(--cl-sm); color: var(--cl-text);">In-Person</span>
+                </div>
+                <div class="d-flex justify-content-between p-2 bg-white rounded">
+                  <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Duration</span>
+                  <span style="font-size: var(--cl-sm); color: var(--cl-text);">30 minutes</span>
+                </div>
+                <div class="d-flex justify-content-between p-2 bg-white rounded">
+                  <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Consultation Fee</span>
+                  <span style="font-size: var(--cl-sm); color: var(--cl-text);">$75</span>
+                </div>
+                <button class="btn btn-success w-100 mt-3">
+                  Confirm Appointment
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
