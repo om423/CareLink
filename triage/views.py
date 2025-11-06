@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
+import json
 
 from carelink.common.services.gemini_client import GeminiClient
 from .models import TriageInteraction
@@ -46,7 +47,15 @@ def chat_api(request):
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
 
-    symptoms = (request.POST.get("symptoms") or "").strip()
+    # Parse JSON body
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    symptoms = (body.get("symptoms") or "").strip()
+    conversation_history = body.get("conversation_history", [])
+
     if not symptoms:
         return JsonResponse({"error": "Please describe your symptoms."}, status=400)
 
@@ -55,13 +64,23 @@ def chat_api(request):
     patient_ctx = get_patient_context(request.user)
 
     try:
-        result = client.generate_triage(symptoms, patient_context=patient_ctx)
+        # Build full conversation context by combining history with current symptoms
+        all_symptoms = []
+        for item in conversation_history:
+            if item.get("role") == "user":
+                all_symptoms.append(item.get("content", ""))
+        all_symptoms.append(symptoms)
 
-        # Persist interaction
+        # Combine all symptoms for comprehensive assessment
+        combined_symptoms = "\n\nAdditional information: ".join(all_symptoms)
+
+        result = client.generate_triage(combined_symptoms, patient_context=patient_ctx)
+
+        # Persist interaction with full context
         try:
             TriageInteraction.objects.create(
                 user=request.user,
-                symptoms_text=symptoms,
+                symptoms_text=combined_symptoms,
                 severity=result.get("severity"),
                 result=result,
             )

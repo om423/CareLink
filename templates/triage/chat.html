@@ -139,6 +139,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const severityDisplay = document.getElementById('severityDisplay');
   const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
+  // Track conversation history
+  let conversationHistory = [];
+
   // Function to scroll to bottom of messages
   function scrollToBottom() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -314,15 +317,16 @@ document.addEventListener('DOMContentLoaded', function() {
     addLoadingMessage();
 
     try {
-      // Make API request
+      // Make API request with conversation history
       const response = await fetch('{% url "triage:chat_api" %}', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
           'X-CSRFToken': csrfToken
         },
-        body: new URLSearchParams({
-          'symptoms': symptoms
+        body: JSON.stringify({
+          'symptoms': symptoms,
+          'conversation_history': conversationHistory
         })
       });
 
@@ -332,7 +336,19 @@ document.addEventListener('DOMContentLoaded', function() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Add AI response
+        // Add user message to history
+        conversationHistory.push({
+          role: 'user',
+          content: symptoms
+        });
+
+        // Add AI response to history
+        conversationHistory.push({
+          role: 'assistant',
+          content: data.result
+        });
+
+        // Add AI response to UI
         addAIResponse(data.result);
       } else {
         // Show error
