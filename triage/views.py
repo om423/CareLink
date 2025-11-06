@@ -19,8 +19,27 @@ def index(request):
 
 @login_required
 def history(request):
-    """View triage history for the current user."""
-    interactions = TriageInteraction.objects.filter(user=request.user).order_by('-created_at')
+    """View triage history for the current user - one entry per chat session."""
+    # Get unique sessions (latest interaction per session_id)
+    # For interactions without session_id, each one is treated as a separate session
+    from django.db.models import Max
+
+    # Get the latest interaction ID for each session
+    latest_interactions = (
+        TriageInteraction.objects
+        .filter(user=request.user)
+        .values('session_id')
+        .annotate(latest_id=Max('id'))
+        .values_list('latest_id', flat=True)
+    )
+
+    # Get those interactions
+    interactions = (
+        TriageInteraction.objects
+        .filter(id__in=latest_interactions)
+        .order_by('-updated_at')
+    )
+
     return render(request, "triage/history.html", {"interactions": interactions})
 
 
@@ -71,6 +90,7 @@ def chat_api(request):
 
     symptoms = (body.get("symptoms") or "").strip()
     conversation_history = body.get("conversation_history", [])
+    session_id = body.get("session_id")
 
     if not symptoms:
         return JsonResponse({"error": "Please describe your symptoms."}, status=400)
@@ -92,14 +112,33 @@ def chat_api(request):
 
         result = client.generate_triage(combined_symptoms, patient_context=patient_ctx)
 
-        # Persist interaction with full context
+        # Persist or update interaction with full context based on session_id
         try:
-            TriageInteraction.objects.create(
-                user=request.user,
-                symptoms_text=combined_symptoms,
-                severity=result.get("severity"),
-                result=result,
-            )
+            if session_id:
+                # Try to find existing interaction for this session
+                interaction, created = TriageInteraction.objects.get_or_create(
+                    user=request.user,
+                    session_id=session_id,
+                    defaults={
+                        'symptoms_text': combined_symptoms,
+                        'severity': result.get("severity"),
+                        'result': result,
+                    }
+                )
+                # If interaction already exists, update it with latest information
+                if not created:
+                    interaction.symptoms_text = combined_symptoms
+                    interaction.severity = result.get("severity")
+                    interaction.result = result
+                    interaction.save()
+            else:
+                # Fallback if no session_id provided
+                TriageInteraction.objects.create(
+                    user=request.user,
+                    symptoms_text=combined_symptoms,
+                    severity=result.get("severity"),
+                    result=result,
+                )
         except Exception:
             # non-fatal; do not block UI if persistence fails
             pass

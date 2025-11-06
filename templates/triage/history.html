@@ -35,13 +35,13 @@
                 <div class="col-md-2">
                   <div class="text-center">
                     <div style="font-size: var(--cl-h4); font-weight: var(--cl-font-bold); color: var(--cl-text);">
-                      {{ interaction.created_at|date:"d" }}
+                      {{ interaction.updated_at|date:"d" }}
                     </div>
                     <div style="font-size: var(--cl-sm); color: var(--cl-text-muted); text-transform: uppercase;">
-                      {{ interaction.created_at|date:"M Y" }}
+                      {{ interaction.updated_at|date:"M Y" }}
                     </div>
                     <div style="font-size: var(--cl-xs); color: var(--cl-text-muted); margin-top: 0.25rem;">
-                      {{ interaction.created_at|date:"g:i A" }}
+                      {{ interaction.updated_at|date:"g:i A" }}
                     </div>
                   </div>
                 </div>

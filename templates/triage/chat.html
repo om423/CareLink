@@ -142,6 +142,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const severityDisplay = document.getElementById('severityDisplay');
   const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
+  // Generate unique session ID for this chat session
+  const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
   // Track conversation history
   let conversationHistory = [];
 
@@ -329,7 +332,8 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         body: JSON.stringify({
           'symptoms': symptoms,
-          'conversation_history': conversationHistory
+          'conversation_history': conversationHistory,
+          'session_id': sessionId
         })
       });
 
