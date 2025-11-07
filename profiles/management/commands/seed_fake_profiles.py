@@ -122,7 +122,6 @@ class Command(BaseCommand):
             updated += 1
 
         self.stdout.write(self.style.SUCCESS(
-            f"Profiles ensured: {users.count()}, newly created: {created}, updated with fake data: {updated}"
+            f"Profiles ensured: {users.count()}, newly created: {created}, "
+            f"updated with fake data: {updated}"
         ))
-
-

@@ -12,6 +12,7 @@ def health(request):
 def readiness(request):
     return JsonResponse({"ready": True})
 
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("home.urls")),

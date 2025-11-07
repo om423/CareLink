@@ -355,4 +355,3 @@ class GeminiClient:
             "}\n"
         )
         return prompt
-

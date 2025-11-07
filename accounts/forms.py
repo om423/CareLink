@@ -99,4 +99,3 @@ class ProfileForm(forms.ModelForm):
                 )
             }),
         }
-

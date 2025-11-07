@@ -114,7 +114,7 @@ class PatientProfileAdmin(admin.ModelAdmin):
         })
     )
     actions = ['export_profiles_csv']
-    
+
     @admin.action(description='Export selected profiles to CSV')
     def export_profiles_csv(self, request, queryset):
         """Export selected profiles to CSV file."""

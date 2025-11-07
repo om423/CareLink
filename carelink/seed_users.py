@@ -11,7 +11,7 @@ def seed_users():
         ("Guilherme", "Luvielmo"),
         ("Raphael", "Lafeldt"),
     ]
-    
+
     for first, last in users:
         username = f"{first.lower()}{last.lower()}"
         user, created = User.objects.get_or_create(
@@ -29,7 +29,7 @@ def seed_users():
             print(f"Created user: {username}")
         else:
             print(f"User {username} already exists")
-    
+
     # Create superuser
     if not User.objects.filter(username="admin").exists():
         User.objects.create_superuser("admin", "admin@example.com", "admin123")

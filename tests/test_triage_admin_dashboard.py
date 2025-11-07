@@ -213,4 +213,3 @@ def test_staff_can_view_any_patient_detail(client):
     assert r.status_code == 200
     content = r.content.decode()
     assert "Patient symptoms" in content
-

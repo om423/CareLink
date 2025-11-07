@@ -156,11 +156,17 @@ def get_patient_context(user):
     if PatientProfile is not None:
         try:
             prof = PatientProfile.objects.get(user=user)
+            weight_val = getattr(prof, "weight", None)
+            weight = float(weight_val) if weight_val is not None else None
             patient_ctx = {
                 "age": getattr(prof, "age", None),
-                "weight": float(getattr(prof, "weight", 0)) if getattr(prof, "weight", None) is not None else None,
-                "medical_history": (getattr(prof, "medical_history", None) or "")[:300] or None,
-                "allergies": (getattr(prof, "allergies", None) or "")[:200] or None,
+                "weight": weight,
+                "medical_history": (
+                    (getattr(prof, "medical_history", None) or "")[:300] or None
+                ),
+                "allergies": (
+                    (getattr(prof, "allergies", None) or "")[:200] or None
+                ),
             }
         except Exception:
             patient_ctx = {}
