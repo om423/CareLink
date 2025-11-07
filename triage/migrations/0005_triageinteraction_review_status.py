@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("triage", "0004_triageinteraction_doctor_notes_and_more"),
+        ("triage", "0006_merge_0004_migrations"),
     ]
 
     operations = [
