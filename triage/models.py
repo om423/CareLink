@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class TriageInteraction(models.Model):
@@ -15,6 +16,24 @@ class TriageInteraction(models.Model):
     symptoms_text = models.TextField()
     severity = models.CharField(max_length=20, blank=True, null=True)
     result = models.JSONField(blank=True, null=True)
+    doctor_notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Professional notes or feedback from doctor/admin"
+    )
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="triage_reviews",
+        help_text="Doctor/admin who reviewed this triage report"
+    )
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when doctor notes were last updated"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -32,3 +51,7 @@ class TriageInteraction(models.Model):
         """Return numeric rank for severity ordering (higher = more urgent)."""
         levels = {"Critical": 4, "Severe": 3, "Moderate": 2, "Mild": 1}
         return levels.get(self.severity, 0)
+
+    def has_doctor_notes(self):
+        """Check if doctor notes exist and are not empty."""
+        return bool(self.doctor_notes and self.doctor_notes.strip())

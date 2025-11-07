@@ -1,9 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.http import JsonResponse
 from django.db import models
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 import json
 
 from carelink.common.services.gemini_client import GeminiClient
@@ -49,8 +51,6 @@ def history(request):
 @login_required
 def detail(request, interaction_id):
     """View details of a specific triage interaction."""
-    from django.shortcuts import get_object_or_404
-
     # Allow staff/admin or doctors to view any patient's triage
     can_view_all = False
     if request.user.is_staff or request.user.is_superuser:
@@ -73,7 +73,81 @@ def detail(request, interaction_id):
         interaction = get_object_or_404(
             TriageInteraction, id=interaction_id, user=request.user
         )
-    return render(request, "triage/detail.html", {"interaction": interaction})
+
+    # For doctors/staff: get patient profile and history
+    patient_profile = None
+    patient_history = None
+    if can_view_all:
+        try:
+            patient_profile = PatientProfile.objects.get(
+                user=interaction.user
+            )
+        except PatientProfile.DoesNotExist:
+            pass
+
+        # Get patient's triage interactions (including current one for highlighting)
+        patient_history = (
+            TriageInteraction.objects
+            .filter(user=interaction.user)
+            .order_by('-created_at')[:11]  # Last 11 interactions (to show 10 others + current)
+        )
+
+    context = {
+        "interaction": interaction,
+        "patient_profile": patient_profile,
+        "patient_history": patient_history,
+        "is_doctor_view": can_view_all,
+    }
+    return render(request, "triage/detail.html", context)
+
+
+@login_required
+@require_POST
+def update_doctor_notes(request, interaction_id):
+    """
+    Allow staff/admin or doctors to add or update professional notes
+    for a triage interaction.
+    """
+    # Check if user is staff/admin or has doctor role
+    can_add_notes = False
+    if request.user.is_staff or request.user.is_superuser:
+        can_add_notes = True
+    else:
+        try:
+            if PatientProfile is not None:
+                profile = PatientProfile.objects.get(user=request.user)
+                if profile.role == 'doctor':
+                    can_add_notes = True
+        except Exception:
+            pass
+
+    if not can_add_notes:
+        return JsonResponse(
+            {"error": "Access denied. Only doctors/admins can add notes."},
+            status=403
+        )
+
+    try:
+        triage = TriageInteraction.objects.get(pk=interaction_id)
+    except TriageInteraction.DoesNotExist:
+        return JsonResponse(
+            {"error": "Triage record not found."}, status=404
+        )
+
+    notes = (request.POST.get("doctor_notes") or "").strip()
+    triage.doctor_notes = notes
+    triage.reviewed_by = request.user
+    triage.reviewed_at = timezone.now()
+    triage.save(update_fields=["doctor_notes", "reviewed_by", "reviewed_at"])
+
+    return JsonResponse({
+        "success": True,
+        "doctor_notes": triage.doctor_notes,
+        "reviewed_by": (
+            request.user.get_full_name() or request.user.username
+        ),
+        "reviewed_at": triage.reviewed_at.strftime("%Y-%m-%d %H:%M"),
+    })
 
 
 def get_patient_context(user):
