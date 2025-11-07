@@ -11,6 +11,14 @@ class TriageInteraction(models.Model):
     symptoms_text = models.TextField()
     severity = models.CharField(max_length=20, blank=True, null=True)
     result = models.JSONField(blank=True, null=True)
+    assigned_doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="assigned_triage_interactions",
+        help_text="Doctor/admin assigned to follow up on this triage report",
+    )
     doctor_notes = models.TextField(
         blank=True, null=True, help_text="Professional notes or feedback from doctor/admin"
     )
@@ -56,3 +64,28 @@ class TriageInteraction(models.Model):
     def has_doctor_notes(self):
         """Check if doctor notes exist and are not empty."""
         return bool(self.doctor_notes and self.doctor_notes.strip())
+
+
+class TriageDoctorNote(models.Model):
+    interaction = models.ForeignKey(
+        TriageInteraction,
+        on_delete=models.CASCADE,
+        related_name="notes",
+        help_text="Triage interaction this note belongs to",
+    )
+    doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="triage_notes",
+        help_text="Doctor/admin who wrote the note",
+    )
+    note = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Triage Doctor Note"
+        verbose_name_plural = "Triage Doctor Notes"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"Note by {self.doctor.username} on {self.interaction.id} at {self.created_at:%Y-%m-%d %H:%M}"
