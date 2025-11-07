@@ -72,12 +72,26 @@
                     <i class="fas fa-hospital-user me-1"></i>Doctor Dashboard
                   </a>
                 </li>
+                {% if user.is_staff or user.is_superuser %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'triage:admin_dashboard' %}">
+                    <i class="fas fa-clipboard-list me-1"></i>Triage Dashboard
+                  </a>
+                </li>
+                {% endif %}
                 <li class="nav-item">
                   <a class="nav-link" href="{% url 'profiles:edit' %}">
                     <i class="fas fa-user-md me-1"></i>My Profile
                   </a>
                 </li>
               {% else %}
+                {% if user.is_staff or user.is_superuser %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'triage:admin_dashboard' %}">
+                    <i class="fas fa-clipboard-list me-1"></i>Triage Dashboard
+                  </a>
+                </li>
+                {% endif %}
                 <li class="nav-item">
                   <a class="nav-link" href="{% url 'profiles:edit' %}">
                     <i class="fas fa-user-md me-1"></i>My Profile

@@ -44,8 +44,8 @@
               <small class="text-muted">Incoming Reports</small>
               <i class="fas fa-clipboard-list" style="color: var(--cl-blue);"></i>
             </div>
-            <h3 class="mb-1" style="font-size: var(--cl-h2); color: var(--cl-text);">24</h3>
-            <small class="text-success">+6 today</small>
+            <h3 class="mb-1" style="font-size: var(--cl-h2); color: var(--cl-text);">{{ total_reports }}</h3>
+            <small class="text-success">+{{ today_reports }} today</small>
           </div>
         </div>
       </div>
@@ -56,7 +56,7 @@
               <small class="text-muted">High-Risk Patients</small>
               <i class="fas fa-exclamation-triangle" style="color: var(--cl-red);"></i>
             </div>
-            <h3 class="mb-1" style="font-size: var(--cl-h2); color: var(--cl-text);">8</h3>
+            <h3 class="mb-1" style="font-size: var(--cl-h2); color: var(--cl-text);">{{ high_risk_count }}</h3>
             <small class="text-danger">Requires immediate attention</small>
           </div>
         </div>
@@ -68,7 +68,7 @@
               <small class="text-muted">Active Patients</small>
               <i class="fas fa-users" style="color: var(--cl-teal);"></i>
             </div>
-            <h3 class="mb-1" style="font-size: var(--cl-h2); color: var(--cl-text);">156</h3>
+            <h3 class="mb-1" style="font-size: var(--cl-h2); color: var(--cl-text);">{{ active_patients }}</h3>
             <small class="text-muted">Total under care</small>
           </div>
         </div>
@@ -116,33 +116,45 @@
               </tr>
             </thead>
             <tbody>
+              {% for report in recent_reports %}
               <tr style="border-bottom: 1px solid var(--cl-border);">
-                <td>John Smith</td>
-                <td class="text-muted">45</td>
-                <td>Chest Pain</td>
-                <td><span class="badge bg-danger">High</span></td>
-                <td class="text-muted">2025-11-06 09:23 AM</td>
-                <td><span class="badge" style="border: 1px solid var(--cl-red); color: var(--cl-red); background: transparent;">Pending Review</span></td>
-                <td class="text-end"><button class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-blue);">Review</button></td>
+                <td>{{ report.user.get_full_name|default:report.user.username }}</td>
+                <td class="text-muted">
+                  {% if report.user.patient_profile.age %}
+                    {{ report.user.patient_profile.age }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+                <td>{{ report.symptoms_text|truncatewords:5 }}</td>
+                <td>
+                  <span class="badge" style="
+                    {% if report.severity == 'Critical' %}background: var(--cl-red);
+                    {% elif report.severity == 'Severe' %}background: var(--cl-amber);
+                    {% elif report.severity == 'Moderate' %}background: var(--cl-teal);
+                    {% else %}background: var(--cl-green);{% endif %}
+                    color: white;">
+                    {{ report.severity|default:"Unknown" }}
+                  </span>
+                </td>
+                <td class="text-muted">{{ report.updated_at|date:"Y-m-d g:i A" }}</td>
+                <td>
+                  <span class="badge" style="border: 1px solid var(--cl-blue); color: var(--cl-blue); background: transparent;">
+                    {% if report.severity == 'Critical' or report.severity == 'Severe' %}Pending Review
+                    {% else %}Under Review{% endif %}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'triage:detail' report.id %}" class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-blue);">Review</a>
+                </td>
               </tr>
-              <tr style="border-bottom: 1px solid var(--cl-border);">
-                <td>Emma Johnson</td>
-                <td class="text-muted">32</td>
-                <td>Persistent Cough</td>
-                <td><span class="badge bg-warning">Moderate</span></td>
-                <td class="text-muted">2025-11-06 08:45 AM</td>
-                <td><span class="badge" style="border: 1px solid var(--cl-amber); color: var(--cl-amber); background: transparent;">Under Review</span></td>
-                <td class="text-end"><button class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-blue);">Review</button></td>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">
+                  No triage reports available yet.
+                </td>
               </tr>
-              <tr style="border-bottom: 1px solid var(--cl-border);">
-                <td>Michael Brown</td>
-                <td class="text-muted">28</td>
-                <td>Headache</td>
-                <td><span class="badge bg-success">Mild</span></td>
-                <td class="text-muted">2025-11-06 07:30 AM</td>
-                <td><span class="badge" style="border: 1px solid var(--cl-green); color: var(--cl-green); background: transparent;">Completed</span></td>
-                <td class="text-end"><button class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-blue);">Review</button></td>
-              </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -160,15 +172,15 @@
             <div class="d-flex flex-column gap-2">
               <div class="d-flex justify-content-between p-2" style="background: var(--cl-bg); border-radius: var(--cl-radius);">
                 <span class="text-muted">Reports Reviewed</span>
-                <span style="color: var(--cl-text);">12 / 24</span>
+                <span style="color: var(--cl-text);">{{ reports_reviewed_today }} / {{ total_reports }}</span>
               </div>
               <div class="d-flex justify-content-between p-2" style="background: var(--cl-bg); border-radius: var(--cl-radius);">
                 <span class="text-muted">Appointments Scheduled</span>
-                <span style="color: var(--cl-text);">8</span>
+                <span style="color: var(--cl-text);">{{ appointments_today }}</span>
               </div>
               <div class="d-flex justify-content-between p-2" style="background: var(--cl-bg); border-radius: var(--cl-radius);">
                 <span class="text-muted">Follow-ups Required</span>
-                <span style="color: var(--cl-text);">5</span>
+                <span style="color: var(--cl-text);">{{ follow_ups_required }}</span>
               </div>
             </div>
           </div>

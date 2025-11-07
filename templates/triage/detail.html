@@ -8,9 +8,15 @@
     <div class="container py-3">
       <div class="d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-3">
+          {% if user.is_authenticated and user.patient_profile.role == 'patient' %}
           <a href="{% url 'triage:history' %}" class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-text-muted);">
             <i class="fas fa-arrow-left"></i>
           </a>
+          {% elif user.is_authenticated %}
+          <a href="{% url 'triage:admin_dashboard' %}" class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-text-muted);">
+            <i class="fas fa-arrow-left"></i>
+          </a>
+          {% endif %}
           <div>
             <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">Triage Assessment</h2>
             <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
@@ -18,11 +24,13 @@
             </p>
           </div>
         </div>
+        {% if user.is_authenticated and user.patient_profile.role == 'patient' %}
         <div class="d-flex gap-2">
           <a href="{% url 'triage:chat' %}" class="btn btn-outline-primary">
             <i class="fas fa-redo me-2"></i>New Assessment
           </a>
         </div>
+        {% endif %}
       </div>
     </div>
   </header>
@@ -158,15 +166,21 @@
           </div>
           <div class="card-body">
             <div class="d-flex flex-column gap-2">
+              {% if user.is_authenticated and user.patient_profile.role == 'patient' %}
               <a href="{% url 'triage:chat' %}" class="btn btn-primary w-100 text-start">
                 <i class="fas fa-redo me-2"></i>New Assessment
               </a>
-              <a href="{% url 'doctors:index' %}" class="btn btn-outline-primary w-100 text-start">
+              <a href="{% url 'doctors:find_doctor' %}" class="btn btn-outline-primary w-100 text-start">
                 <i class="fas fa-map-marker-alt me-2"></i>Find Nearby Care
               </a>
               <a href="{% url 'appointments:index' %}" class="btn btn-outline-success w-100 text-start">
                 <i class="fas fa-calendar-check me-2"></i>Book Appointment
               </a>
+              {% elif user.is_authenticated %}
+              <a href="{% url 'triage:admin_dashboard' %}" class="btn btn-outline-primary w-100 text-start">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+              </a>
+              {% endif %}
               <button onclick="window.print()" class="btn btn-outline-secondary w-100 text-start">
                 <i class="fas fa-print me-2"></i>Print Report
               </button>

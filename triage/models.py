@@ -17,4 +17,9 @@ class TriageInteraction(models.Model):
     def __str__(self) -> str:
         return f"TriageInteraction(user={self.user.username}, severity={self.severity}, at={self.created_at:%Y-%m-%d %H:%M})"
 
+    def severity_rank(self):
+        """Return numeric rank for severity ordering (higher = more urgent)."""
+        levels = {"Critical": 4, "Severe": 3, "Moderate": 2, "Mild": 1}
+        return levels.get(self.severity, 0)
+
 # Create your models here.

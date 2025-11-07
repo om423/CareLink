@@ -1,12 +1,15 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
+from django.db import models
 import json
 
 from carelink.common.services.gemini_client import GeminiClient
 from .models import TriageInteraction
+from accounts.views import patient_required
 
 try:
     from profiles.models import PatientProfile
@@ -17,9 +20,9 @@ def index(request):
     return render(request, "triage/index.html")
 
 
-@login_required
+@patient_required
 def history(request):
-    """View triage history for the current user - one entry per chat session."""
+    """View triage history for the current user - one entry per chat session. Patients only."""
     # Get unique sessions (latest interaction per session_id)
     # For interactions without session_id, each one is treated as a separate session
     from django.db.models import Max
@@ -48,7 +51,24 @@ def detail(request, interaction_id):
     """View details of a specific triage interaction."""
     from django.shortcuts import get_object_or_404
 
-    interaction = get_object_or_404(TriageInteraction, id=interaction_id, user=request.user)
+    # Allow staff/admin or doctors to view any patient's triage, otherwise restrict to own
+    can_view_all = False
+    if request.user.is_staff or request.user.is_superuser:
+        can_view_all = True
+    else:
+        # Check if user has doctor role
+        try:
+            if PatientProfile is not None:
+                profile = PatientProfile.objects.get(user=request.user)
+                if profile.role == 'doctor':
+                    can_view_all = True
+        except Exception:
+            pass
+    
+    if can_view_all:
+        interaction = get_object_or_404(TriageInteraction, id=interaction_id)
+    else:
+        interaction = get_object_or_404(TriageInteraction, id=interaction_id, user=request.user)
     return render(request, "triage/detail.html", {"interaction": interaction})
 
 
@@ -69,14 +89,14 @@ def get_patient_context(user):
     return patient_ctx
 
 
-@login_required
+@patient_required
 def chat(request):
-    """Main chat view - renders the chat page."""
+    """Main chat view - renders the chat page. Patients only."""
     patient_ctx = get_patient_context(request.user)
     return render(request, "triage/chat.html", {"patient_ctx": patient_ctx})
 
 
-@login_required
+@patient_required
 def chat_api(request):
     """API endpoint for submitting symptoms and getting AI response (AJAX)."""
     if request.method != "POST":
@@ -153,3 +173,35 @@ def chat_api(request):
         return JsonResponse({
             "error": f"Sorry — something went wrong generating your preliminary assessment: {e}"
         }, status=500)
+
+
+@staff_member_required
+def admin_dashboard(request):
+    """Doctor/Admin dashboard to view and prioritize incoming triage reports."""
+    # Order by severity rank (Critical → Severe → Moderate → Mild) then by recency
+    severity_order = models.Case(
+        models.When(severity="Critical", then=4),
+        models.When(severity="Severe", then=3),
+        models.When(severity="Moderate", then=2),
+        models.When(severity="Mild", then=1),
+        default=0,
+        output_field=models.IntegerField(),
+    )
+
+    interactions = (
+        TriageInteraction.objects.select_related("user")
+        .annotate(severity_rank=severity_order)
+        .order_by("-severity_rank", "-updated_at")
+    )
+
+    # Optional filter by severity level
+    filter_level = request.GET.get("severity")
+    if filter_level:
+        interactions = interactions.filter(severity=filter_level)
+
+    context = {
+        "interactions": interactions,
+        "filter_level": filter_level,
+        "severity_levels": ["Critical", "Severe", "Moderate", "Mild"],
+    }
+    return render(request, "triage/admin_dashboard.html", context)
