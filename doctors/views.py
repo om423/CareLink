@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+
 try:
     from reportlab.lib.pagesizes import letter
     from reportlab.pdfgen import canvas
