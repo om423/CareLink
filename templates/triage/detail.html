@@ -28,7 +28,19 @@
             </p>
           </div>
         </div>
-        {% if user.is_authenticated and user.patient_profile.role == 'patient' %}
+        {% if is_doctor_view %}
+        <div class="d-flex gap-2">
+          {% if interaction.review_status != 'finished_review' %}
+          <button id="markCompletedBtn" class="btn btn-success" data-interaction-id="{{ interaction.id }}">
+            <i class="fas fa-check-circle me-2"></i>Mark Review Completed
+          </button>
+          {% else %}
+          <span class="badge bg-success" style="padding: 8px 16px; font-size: var(--cl-base);">
+            <i class="fas fa-check-circle me-2"></i>Review Completed
+          </span>
+          {% endif %}
+        </div>
+        {% elif user.is_authenticated and user.patient_profile.role == 'patient' %}
         <div class="d-flex gap-2">
           <a href="{% url 'triage:chat' %}" class="btn btn-outline-primary">
             <i class="fas fa-redo me-2"></i>New Assessment
@@ -483,6 +495,52 @@ document.getElementById("doctorNotesForm").addEventListener("submit", async func
     saveButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Notes';
   }
 });
+</script>
+  {% endif %}
+  {% if is_doctor_view %}
+<script>
+const markCompletedBtn = document.getElementById("markCompletedBtn");
+if (markCompletedBtn) {
+  markCompletedBtn.addEventListener("click", async function(e) {
+    e.preventDefault();
+    const btn = e.target.closest("button") || e.target;
+    const interactionId = btn.dataset.interactionId;
+    const csrf = document.querySelector("[name=csrfmiddlewaretoken]").value;
+    
+    // Disable button and show loading state
+    btn.disabled = true;
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Marking...';
+    
+    try {
+      const res = await fetch(
+        `/triage/admin/review/${interactionId}/complete/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrf,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      
+      const json = await res.json();
+      
+      if (json.success) {
+        // Replace button with completed badge
+        btn.outerHTML = '<span class="badge bg-success" style="padding: 8px 16px; font-size: var(--cl-base);"><i class="fas fa-check-circle me-2"></i>Review Completed</span>';
+      } else {
+        alert(json.error || "Failed to mark review as completed. Please try again.");
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+      }
+    } catch (error) {
+      alert("Error: " + error.message);
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+    }
+  });
+}
 </script>
   {% endif %}
 {% endif %}

@@ -69,6 +69,10 @@ def detail(request, interaction_id):
         interaction = get_object_or_404(
             TriageInteraction, id=interaction_id
         )
+        # Update status to "under_review" if it's currently "pending_review"
+        if interaction.review_status == "pending_review":
+            interaction.review_status = "under_review"
+            interaction.save(update_fields=["review_status"])
     else:
         interaction = get_object_or_404(
             TriageInteraction, id=interaction_id, user=request.user
@@ -231,6 +235,7 @@ def chat_api(request):
                         'symptoms_text': combined_symptoms,
                         'severity': result.get("severity"),
                         'result': result,
+                        'review_status': 'pending_review',
                     }
                 )
                 # If interaction already exists, update it with latest information
@@ -246,6 +251,7 @@ def chat_api(request):
                     symptoms_text=combined_symptoms,
                     severity=result.get("severity"),
                     result=result,
+                    review_status='pending_review',
                 )
         except Exception:
             # non-fatal; do not block UI if persistence fails
@@ -261,6 +267,47 @@ def chat_api(request):
         return JsonResponse({
             "error": f"Sorry — something went wrong generating your preliminary assessment: {e}"
         }, status=500)
+
+
+@login_required
+@require_POST
+def mark_review_completed(request, interaction_id):
+    """
+    Allow staff/admin or doctors to mark a triage review as completed.
+    """
+    # Check if user is staff/admin or has doctor role
+    can_complete_review = False
+    if request.user.is_staff or request.user.is_superuser:
+        can_complete_review = True
+    else:
+        try:
+            if PatientProfile is not None:
+                profile = PatientProfile.objects.get(user=request.user)
+                if profile.role == 'doctor':
+                    can_complete_review = True
+        except Exception:
+            pass
+
+    if not can_complete_review:
+        return JsonResponse(
+            {"error": "Access denied. Only doctors/admins can mark reviews as completed."},
+            status=403
+        )
+
+    try:
+        triage = TriageInteraction.objects.get(pk=interaction_id)
+    except TriageInteraction.DoesNotExist:
+        return JsonResponse(
+            {"error": "Triage record not found."}, status=404
+        )
+
+    triage.review_status = "finished_review"
+    triage.save(update_fields=["review_status"])
+
+    return JsonResponse({
+        "success": True,
+        "review_status": triage.review_status,
+    })
 
 
 @staff_member_required

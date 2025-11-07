@@ -108,9 +108,15 @@
                 </td>
                 <td class="text-muted">{{ report.updated_at|date:"Y-m-d g:i A" }}</td>
                 <td>
-                  <span class="badge" style="border: 1px solid var(--cl-blue); color: var(--cl-blue); background: transparent;">
-                    {% if report.severity == 'Critical' or report.severity == 'Severe' %}Pending Review
-                    {% else %}Under Review{% endif %}
+                  <span class="badge" style="padding: 4px 10px; border-radius: 12px; font-weight: var(--cl-font-medium); font-size: var(--cl-xs);
+                    {% if report.review_status == 'pending_review' %}background: #ffc107; color: #000; border: 1px solid #ff9800;
+                    {% elif report.review_status == 'under_review' %}background: var(--cl-blue); color: white;
+                    {% elif report.review_status == 'finished_review' %}background: var(--cl-green); color: white;
+                    {% else %}background: var(--cl-muted-bg); color: var(--cl-text);{% endif %};">
+                    {% if report.review_status == 'pending_review' %}Pending Review
+                    {% elif report.review_status == 'under_review' %}Under Review
+                    {% elif report.review_status == 'finished_review' %}Completed
+                    {% else %}Unknown{% endif %}
                   </span>
                 </td>
                 <td class="text-end">

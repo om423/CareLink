@@ -48,6 +48,7 @@
           <table class="table table-hover align-middle mb-0">
             <thead style="background: var(--cl-muted-bg);">
               <tr>
+                <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Status</th>
                 <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Severity</th>
                 <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Patient</th>
                 <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Symptoms</th>
@@ -60,6 +61,18 @@
             <tbody>
               {% for item in interactions %}
               <tr style="transition: background-color 0.2s;">
+                <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
+                  <span class="badge" style="padding: 4px 10px; border-radius: 12px; font-weight: var(--cl-font-medium); font-size: var(--cl-xs);
+                    {% if item.review_status == 'pending_review' %}background: #ffc107; color: #000; border: 1px solid #ff9800;
+                    {% elif item.review_status == 'under_review' %}background: var(--cl-blue); color: white;
+                    {% elif item.review_status == 'finished_review' %}background: var(--cl-green); color: white;
+                    {% else %}background: var(--cl-muted-bg); color: var(--cl-text);{% endif %};">
+                    {% if item.review_status == 'pending_review' %}Pending Review
+                    {% elif item.review_status == 'under_review' %}Under Review
+                    {% elif item.review_status == 'finished_review' %}Completed
+                    {% else %}{{ item.review_status|title }}{% endif %}
+                  </span>
+                </td>
                 <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
                   <span class="badge" style="padding: 6px 12px; border-radius: 12px; font-weight: var(--cl-font-medium); font-size: var(--cl-sm);
                     background:
@@ -122,7 +135,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="7" class="text-center py-5" style="color: var(--cl-text-muted);">
+                <td colspan="8" class="text-center py-5" style="color: var(--cl-text-muted);">
                   <i class="fas fa-clipboard-list fa-3x mb-3" style="color: var(--cl-border);"></i>
                   <div style="font-size: var(--cl-h4); color: var(--cl-text); margin-bottom: 0.5rem;">No triage reports available</div>
                   <p class="mb-0" style="font-size: var(--cl-sm);">

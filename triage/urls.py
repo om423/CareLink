@@ -15,4 +15,9 @@ urlpatterns = [
         views.update_doctor_notes,
         name="update_doctor_notes"
     ),
+    path(
+        "admin/review/<int:interaction_id>/complete/",
+        views.mark_review_completed,
+        name="mark_review_completed"
+    ),
 ]
