@@ -120,8 +120,8 @@ def test_json_repair_flow(client, monkeypatch, settings):
                             (),
                             {
                                 "generate_content": (
-                                    lambda self=None, model=None, contents=None: FakeModel().generate_content(
-                                        ""
+                                    lambda self=None, model=None, contents=None: (
+                                        FakeModel().generate_content("")
                                     )
                                 )
                             },
@@ -177,8 +177,8 @@ def test_transient_error_backoff(client, monkeypatch, settings):
                             (),
                             {
                                 "generate_content": (
-                                    lambda self=None, model=None, contents=None: FlakyModel().generate_content(
-                                        ""
+                                    lambda self=None, model=None, contents=None: (
+                                        FlakyModel().generate_content("")
                                     )
                                 )
                             },
