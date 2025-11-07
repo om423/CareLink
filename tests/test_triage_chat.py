@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -42,13 +44,18 @@ def test_triage_chat_post_monkeypatched(client, monkeypatch):
     monkeypatch.setattr(gemini_client.GeminiClient, "_build_prompt", wrapper_build)
     monkeypatch.setattr(gemini_client.GeminiClient, "generate_triage", fake_generate)
 
-    r = client.post(reverse("triage:chat"), {"symptoms": "fever and sore throat"})
+    r = client.post(
+        reverse("triage:chat_api"),
+        json.dumps({"symptoms": "fever and sore throat"}),
+        content_type="application/json",
+    )
     assert r.status_code == 200
-    # ensure the rendered template contains expected strings
-    content = r.content.decode()
-    assert "Possible viral upper respiratory infection." in content
-    assert "Moderate" in content
-    assert "seek care if symptoms worsen" in content
+    data = json.loads(r.content)
+    assert data["success"] is True
+    result = data["result"]
+    assert "Possible viral upper respiratory infection." in result["summary"]
+    assert result["severity"] == "Moderate"
+    assert "seek care if symptoms worsen" in result["advice"]
 
     # Validate patient context labels appear in the prompt
     prompt = captured_prompt["text"]
@@ -134,11 +141,17 @@ def test_json_repair_flow(client, monkeypatch, settings):
     # Skip sleep
     monkeypatch.setattr(gemini_client.time, "sleep", lambda s: None)
 
-    r = client.post(reverse("triage:chat"), {"symptoms": "test"})
+    r = client.post(
+        reverse("triage:chat_api"),
+        json.dumps({"symptoms": "test"}),
+        content_type="application/json",
+    )
     assert r.status_code == 200
-    html = r.content.decode()
-    assert "Mild" in html
-    assert "OK" in html
+    data = json.loads(r.content)
+    assert data["success"] is True
+    result = data["result"]
+    assert result["severity"] == "Mild"
+    assert result["summary"] == "OK"
 
 
 @pytest.mark.django_db
@@ -190,11 +203,17 @@ def test_transient_error_backoff(client, monkeypatch, settings):
     )
     monkeypatch.setattr(gemini_client.time, "sleep", lambda s: None)
 
-    r = client.post(reverse("triage:chat"), {"symptoms": "test"})
+    r = client.post(
+        reverse("triage:chat_api"),
+        json.dumps({"symptoms": "test"}),
+        content_type="application/json",
+    )
     assert r.status_code == 200
-    html = r.content.decode()
-    assert "Severe" in html
-    assert "Y" in html
+    data = json.loads(r.content)
+    assert data["success"] is True
+    result = data["result"]
+    assert result["severity"] == "Severe"
+    assert result["summary"] == "Y"
 
 
 @pytest.mark.django_db
@@ -206,13 +225,21 @@ def test_context_card_rendered(client, settings):
     try:
         from profiles.models import PatientProfile
 
-        PatientProfile.objects.create(
+        profile, created = PatientProfile.objects.get_or_create(
             user=user,
-            age=44,
-            weight="70.2",
-            medical_history="T2DM",
-            allergies="NSAIDs",
+            defaults={
+                "age": 44,
+                "weight": "70.2",
+                "medical_history": "T2DM",
+                "allergies": "NSAIDs",
+            },
         )
+        if not created:
+            profile.age = 44
+            profile.weight = "70.2"
+            profile.medical_history = "T2DM"
+            profile.allergies = "NSAIDs"
+            profile.save(update_fields=["age", "weight", "medical_history", "allergies"])
     except Exception:
         pass
 
