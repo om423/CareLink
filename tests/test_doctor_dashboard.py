@@ -16,7 +16,7 @@ def _create_user(username: str, role: str = "patient") -> User:
 
 @pytest.mark.django_db
 def test_doctor_dashboard_lists_unassigned_cases(client):
-    doctor = _create_user("house", role="doctor")
+    _create_user("house", role="doctor")
     patient = _create_user("patient-one")
 
     TriageInteraction.objects.create(
@@ -77,7 +77,7 @@ def test_doctor_can_assign_case_to_self(client):
 @pytest.mark.django_db
 def test_doctor_notes_visible_to_all_doctors(client):
     doctor_one = _create_user("doogie", role="doctor")
-    doctor_two = _create_user("meredith", role="doctor")
+    _create_user("meredith", role="doctor")
     patient = _create_user("patient-three")
 
     interaction = TriageInteraction.objects.create(
@@ -117,7 +117,7 @@ def test_doctor_notes_visible_to_all_doctors(client):
 
 @pytest.mark.django_db
 def test_triage_feed_partial_updates(client):
-    doctor = _create_user("poller", role="doctor")
+    _create_user("poller", role="doctor")
     patient = _create_user("patient-feed")
 
     TriageInteraction.objects.create(
@@ -145,7 +145,7 @@ def test_triage_feed_partial_updates(client):
 
 @pytest.mark.django_db
 def test_triage_pdf_download(client):
-    doctor = _create_user("downloads", role="doctor")
+    _create_user("downloads", role="doctor")
     patient = _create_user("patient-pdf")
 
     interaction = TriageInteraction.objects.create(
@@ -168,4 +168,3 @@ def test_triage_pdf_download(client):
     assert response.status_code == 200
     assert response["Content-Type"] == "application/pdf"
     assert response["Content-Disposition"].startswith("attachment; filename=triage-")
-
