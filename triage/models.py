@@ -88,4 +88,7 @@ class TriageDoctorNote(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return f"Note by {self.doctor.username} on {self.interaction.id} at {self.created_at:%Y-%m-%d %H:%M}"
+        return (
+            f"Note by {self.doctor.username} on {self.interaction.id} "
+            f"at {self.created_at:%Y-%m-%d %H:%M}"
+        )
