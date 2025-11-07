@@ -1,6 +1,7 @@
-from django.shortcuts import render
 from django.db import models
+from django.shortcuts import render
 from django.utils import timezone
+
 from accounts.views import doctor_required, patient_required
 from triage.models import TriageInteraction
 
@@ -11,19 +12,13 @@ def index(request):
     # Calculate stats from actual database
     total_reports = TriageInteraction.objects.count()
     today = timezone.now().date()
-    today_reports = TriageInteraction.objects.filter(
-        created_at__date=today
-    ).count()
+    today_reports = TriageInteraction.objects.filter(created_at__date=today).count()
 
     # Count high-risk patients (Critical or Severe severity)
-    high_risk_count = TriageInteraction.objects.filter(
-        severity__in=['Critical', 'Severe']
-    ).count()
+    high_risk_count = TriageInteraction.objects.filter(severity__in=["Critical", "Severe"]).count()
 
     # Count unique active patients
-    active_patients = (
-        TriageInteraction.objects.values('user').distinct().count()
-    )
+    active_patients = TriageInteraction.objects.values("user").distinct().count()
 
     # Get recent triage reports ordered by severity and time
     severity_order = models.Case(
@@ -45,18 +40,18 @@ def index(request):
     reports_reviewed_today = 0  # Placeholder
     appointments_today = 0  # Placeholder
     follow_ups_required = TriageInteraction.objects.filter(
-        severity__in=['Critical', 'Severe']
+        severity__in=["Critical", "Severe"]
     ).count()
 
     context = {
-        'total_reports': total_reports,
-        'today_reports': today_reports,
-        'high_risk_count': high_risk_count,
-        'active_patients': active_patients,
-        'recent_reports': recent_reports,
-        'reports_reviewed_today': reports_reviewed_today,
-        'appointments_today': appointments_today,
-        'follow_ups_required': follow_ups_required,
+        "total_reports": total_reports,
+        "today_reports": today_reports,
+        "high_risk_count": high_risk_count,
+        "active_patients": active_patients,
+        "recent_reports": recent_reports,
+        "reports_reviewed_today": reports_reviewed_today,
+        "appointments_today": appointments_today,
+        "follow_ups_required": follow_ups_required,
     }
     return render(request, "doctors/index.html", context)
 

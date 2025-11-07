@@ -2,176 +2,238 @@
 {% load static %}
 {% block title %}Triage Dashboard · CareLink{% endblock %}
 {% block content %}
-<div style="background: var(--cl-bg); min-height: calc(100vh - 200px);">
-  <!-- Page Header -->
-  <header style="background: white; border-bottom: 1px solid var(--cl-border);">
-    <div class="container py-3">
-      <div class="d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-3">
-          <a href="{% url 'home:index' %}" class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-text-muted);">
-            <i class="fas fa-arrow-left"></i>
-          </a>
-          <div>
-            <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">Incoming Triage Reports</h2>
-            <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Sorted by severity and time. Only visible to doctors and admins.</p>
-          </div>
+    <div style="background: var(--cl-bg); min-height: calc(100vh - 200px);">
+        <!-- Page Header -->
+        <header style="background: white; border-bottom: 1px solid var(--cl-border);">
+            <div class="container py-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="{% url 'home:index' %}"
+                           class="btn btn-sm"
+                           style="background: transparent;
+                                  border: none;
+                                  color: var(--cl-text-muted)">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <div>
+                            <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">Incoming Triage Reports</h2>
+                            <p class="mb-0"
+                               style="font-size: var(--cl-sm);
+                                      color: var(--cl-text-muted)">
+                                Sorted by severity and time. Only visible to doctors and admins.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class="container py-4">
+            <!-- Filter Form -->
+            <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+                <div class="card-body">
+                    <form method="get" class="d-flex align-items-center gap-3">
+                        <label for="severity"
+                               class="mb-0"
+                               style="font-weight: var(--cl-font-medium);
+                                      color: var(--cl-text)">Filter by Severity:</label>
+                        <select id="severity"
+                                name="severity"
+                                onchange="this.form.submit()"
+                                class="form-select"
+                                style="max-width: 200px">
+                            <option value="">All Severities</option>
+                            {% for s in severity_levels %}
+                                <option value="{{ s }}" {% if filter_level == s %}selected{% endif %}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if filter_level %}
+                            <a href="{% url 'triage:admin_dashboard' %}"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear Filter
+                            </a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            <!-- Triage Reports Table -->
+            <div class="card" style="border: 1px solid var(--cl-border);">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead style="background: var(--cl-muted-bg);">
+                                <tr>
+                                    <th style="padding: 1rem;
+                                               font-weight: var(--cl-font-semibold);
+                                               color: var(--cl-text);
+                                               border-bottom: 1px solid var(--cl-border)">Status</th>
+                                    <th style="padding: 1rem;
+                                               font-weight: var(--cl-font-semibold);
+                                               color: var(--cl-text);
+                                               border-bottom: 1px solid var(--cl-border)">Severity</th>
+                                    <th style="padding: 1rem;
+                                               font-weight: var(--cl-font-semibold);
+                                               color: var(--cl-text);
+                                               border-bottom: 1px solid var(--cl-border)">Patient</th>
+                                    <th style="padding: 1rem;
+                                               font-weight: var(--cl-font-semibold);
+                                               color: var(--cl-text);
+                                               border-bottom: 1px solid var(--cl-border)">Symptoms</th>
+                                    <th style="padding: 1rem;
+                                               font-weight: var(--cl-font-semibold);
+                                               color: var(--cl-text);
+                                               border-bottom: 1px solid var(--cl-border)">Summary</th>
+                                    <th style="padding: 1rem;
+                                               font-weight: var(--cl-font-semibold);
+                                               color: var(--cl-text);
+                                               border-bottom: 1px solid var(--cl-border)">Time</th>
+                                    <th style="padding: 1rem;
+                                               font-weight: var(--cl-font-semibold);
+                                               color: var(--cl-text);
+                                               border-bottom: 1px solid var(--cl-border)">Notes</th>
+                                    <th style="padding: 1rem;
+                                               font-weight: var(--cl-font-semibold);
+                                               color: var(--cl-text);
+                                               border-bottom: 1px solid var(--cl-border)">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in interactions %}
+                                    <tr style="transition: background-color 0.2s;">
+                                        <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
+                                            <span class="badge"
+                                                  style="padding: 4px 10px;
+                                                         border-radius: 12px;
+                                                         font-weight: var(--cl-font-medium);
+                                                         font-size: var(--cl-xs);
+                                                         {% if item.review_status == 'pending_review' %}background: #ffc107;
+                                                         color: #000;
+                                                         border: 1px solid #ff9800;
+                                                         {% elif item.review_status == 'under_review' %}background: var(--cl-blue);
+                                                         color: white;
+                                                         {% elif item.review_status == 'finished_review' %}background: var(--cl-green);
+                                                         color: white;
+                                                         {% else %}background: var(--cl-muted-bg);
+                                                         color: var(--cl-text);
+                                                         {% endif %}">
+                                                {% if item.review_status == 'pending_review' %}
+                                                    Pending Review
+                                                {% elif item.review_status == 'under_review' %}
+                                                    Under Review
+                                                {% elif item.review_status == 'finished_review' %}
+                                                    Completed
+                                                {% else %}
+                                                    {{ item.review_status|title }}
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
+                                            <span class="badge"
+                                                  style="padding: 6px 12px;
+                                                         border-radius: 12px;
+                                                         font-weight: var(--cl-font-medium);
+                                                         font-size: var(--cl-sm);
+                                                         background: {% if item.severity == 'Critical' %}var(--cl-red) {% elif item.severity == 'Severe' %}var(--cl-amber) {% elif item.severity == 'Moderate' %}var(--cl-teal) {% else %}var(--cl-green){% endif %};
+                                                         color: white">{{ item.severity|default:"Unknown" }}</span>
+                                        </td>
+                                        <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
+                                            <div style="font-weight: var(--cl-font-medium); color: var(--cl-text);">
+                                                {{ item.user.get_full_name|default:item.user.username }}
+                                            </div>
+                                            <small style="color: var(--cl-text-muted); font-size: var(--cl-xs);">{{ item.user.email }}</small>
+                                        </td>
+                                        <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
+                                            <div style="color: var(--cl-text);
+                                                        font-size: var(--cl-sm);
+                                                        overflow: hidden;
+                                                        text-overflow: ellipsis;
+                                                        display: -webkit-box;
+                                                        -webkit-line-clamp: 2;
+                                                        -webkit-box-orient: vertical;
+                                                        max-width: 300px">
+                                                {{ item.symptoms_text|truncatewords:15 }}
+                                            </div>
+                                        </td>
+                                        <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
+                                            <div style="color: var(--cl-text-muted);
+                                                        font-size: var(--cl-sm);
+                                                        overflow: hidden;
+                                                        text-overflow: ellipsis;
+                                                        display: -webkit-box;
+                                                        -webkit-line-clamp: 2;
+                                                        -webkit-box-orient: vertical;
+                                                        max-width: 300px">
+                                                {% if item.result.summary %}
+                                                    {{ item.result.summary|truncatewords:15 }}
+                                                {% else %}
+                                                    <span style="color: var(--cl-text-muted); font-style: italic;">(No summary)</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
+                                            <div style="color: var(--cl-text);
+                                                        font-size: var(--cl-sm);
+                                                        font-weight: var(--cl-font-medium)">
+                                                {{ item.updated_at|date:"M d, Y" }}
+                                            </div>
+                                            <small style="color: var(--cl-text-muted); font-size: var(--cl-xs);">{{ item.updated_at|date:"H:i" }}</small>
+                                        </td>
+                                        <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
+                                            {% if item.has_doctor_notes %}
+                                                <span class="badge" style="background: var(--cl-green); color: white;">
+                                                    <i class="fas fa-check-circle me-1"></i>Added
+                                                </span>
+                                            {% else %}
+                                                <span class="badge"
+                                                      style="background: var(--cl-muted-bg);
+                                                             color: var(--cl-text-muted)">None</span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
+                                            <a href="{% url 'triage:detail' item.id %}"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="8"
+                                            class="text-center py-5"
+                                            style="color: var(--cl-text-muted)">
+                                            <i class="fas fa-clipboard-list fa-3x mb-3"
+                                               style="color: var(--cl-border)"></i>
+                                            <div style="font-size: var(--cl-h4);
+                                                        color: var(--cl-text);
+                                                        margin-bottom: 0.5rem">No triage reports available</div>
+                                            <p class="mb-0" style="font-size: var(--cl-sm);">
+                                                {% if filter_level %}
+                                                    No reports found with severity level "{{ filter_level }}".
+                                                {% else %}
+                                                    No triage interactions have been submitted yet.
+                                                {% endif %}
+                                            </p>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Summary Stats -->
+            {% if interactions %}
+                <div class="mt-4 text-center">
+                    <p class="text-muted mb-0" style="font-size: var(--cl-sm);">
+                        Showing {{ interactions|length }} report{{ interactions|length|pluralize }}
+                        {% if filter_level %}with severity "{{ filter_level }}"{% endif %}
+                    </p>
+                </div>
+            {% endif %}
         </div>
-      </div>
     </div>
-  </header>
-
-  <div class="container py-4">
-    <!-- Filter Form -->
-    <div class="card mb-4" style="border: 1px solid var(--cl-border);">
-      <div class="card-body">
-        <form method="get" class="d-flex align-items-center gap-3">
-          <label for="severity" class="mb-0" style="font-weight: var(--cl-font-medium); color: var(--cl-text);">Filter by Severity:</label>
-          <select id="severity" name="severity" onchange="this.form.submit()" class="form-select" style="max-width: 200px;">
-            <option value="">All Severities</option>
-            {% for s in severity_levels %}
-              <option value="{{ s }}" {% if filter_level == s %}selected{% endif %}>{{ s }}</option>
-            {% endfor %}
-          </select>
-          {% if filter_level %}
-            <a href="{% url 'triage:admin_dashboard' %}" class="btn btn-sm btn-outline-secondary">
-              <i class="fas fa-times me-1"></i>Clear Filter
-            </a>
-          {% endif %}
-        </form>
-      </div>
-    </div>
-
-    <!-- Triage Reports Table -->
-    <div class="card" style="border: 1px solid var(--cl-border);">
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead style="background: var(--cl-muted-bg);">
-              <tr>
-                <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Status</th>
-                <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Severity</th>
-                <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Patient</th>
-                <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Symptoms</th>
-                <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Summary</th>
-                <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Time</th>
-                <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Notes</th>
-                <th style="padding: 1rem; font-weight: var(--cl-font-semibold); color: var(--cl-text); border-bottom: 1px solid var(--cl-border);">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for item in interactions %}
-              <tr style="transition: background-color 0.2s;">
-                <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
-                  <span class="badge" style="padding: 4px 10px; border-radius: 12px; font-weight: var(--cl-font-medium); font-size: var(--cl-xs);
-                    {% if item.review_status == 'pending_review' %}background: #ffc107; color: #000; border: 1px solid #ff9800;
-                    {% elif item.review_status == 'under_review' %}background: var(--cl-blue); color: white;
-                    {% elif item.review_status == 'finished_review' %}background: var(--cl-green); color: white;
-                    {% else %}background: var(--cl-muted-bg); color: var(--cl-text);{% endif %};">
-                    {% if item.review_status == 'pending_review' %}Pending Review
-                    {% elif item.review_status == 'under_review' %}Under Review
-                    {% elif item.review_status == 'finished_review' %}Completed
-                    {% else %}{{ item.review_status|title }}{% endif %}
-                  </span>
-                </td>
-                <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
-                  <span class="badge" style="padding: 6px 12px; border-radius: 12px; font-weight: var(--cl-font-medium); font-size: var(--cl-sm);
-                    background:
-                      {% if item.severity == 'Critical' %}var(--cl-red)
-                      {% elif item.severity == 'Severe' %}var(--cl-amber)
-                      {% elif item.severity == 'Moderate' %}var(--cl-teal)
-                      {% else %}var(--cl-green){% endif %};
-                    color: white;">
-                    {{ item.severity|default:"Unknown" }}
-                  </span>
-                </td>
-                <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
-                  <div style="font-weight: var(--cl-font-medium); color: var(--cl-text);">
-                    {{ item.user.get_full_name|default:item.user.username }}
-                  </div>
-                  <small style="color: var(--cl-text-muted); font-size: var(--cl-xs);">
-                    {{ item.user.email }}
-                  </small>
-                </td>
-                <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
-                  <div style="color: var(--cl-text); font-size: var(--cl-sm);
-                    overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; max-width: 300px;">
-                    {{ item.symptoms_text|truncatewords:15 }}
-                  </div>
-                </td>
-                <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
-                  <div style="color: var(--cl-text-muted); font-size: var(--cl-sm);
-                    overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; max-width: 300px;">
-                    {% if item.result.summary %}
-                      {{ item.result.summary|truncatewords:15 }}
-                    {% else %}
-                      <span style="color: var(--cl-text-muted); font-style: italic;">(No summary)</span>
-                    {% endif %}
-                  </div>
-                </td>
-                <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
-                  <div style="color: var(--cl-text); font-size: var(--cl-sm); font-weight: var(--cl-font-medium);">
-                    {{ item.updated_at|date:"M d, Y" }}
-                  </div>
-                  <small style="color: var(--cl-text-muted); font-size: var(--cl-xs);">
-                    {{ item.updated_at|date:"H:i" }}
-                  </small>
-                </td>
-                <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
-                  {% if item.has_doctor_notes %}
-                    <span class="badge" style="background: var(--cl-green); color: white;">
-                      <i class="fas fa-check-circle me-1"></i>Added
-                    </span>
-                  {% else %}
-                    <span class="badge" style="background: var(--cl-muted-bg); color: var(--cl-text-muted);">
-                      None
-                    </span>
-                  {% endif %}
-                </td>
-                <td style="padding: 1rem; border-bottom: 1px solid var(--cl-border);">
-                  <a href="{% url 'triage:detail' item.id %}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-eye me-1"></i>View
-                  </a>
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="8" class="text-center py-5" style="color: var(--cl-text-muted);">
-                  <i class="fas fa-clipboard-list fa-3x mb-3" style="color: var(--cl-border);"></i>
-                  <div style="font-size: var(--cl-h4); color: var(--cl-text); margin-bottom: 0.5rem;">No triage reports available</div>
-                  <p class="mb-0" style="font-size: var(--cl-sm);">
-                    {% if filter_level %}
-                      No reports found with severity level "{{ filter_level }}".
-                    {% else %}
-                      No triage interactions have been submitted yet.
-                    {% endif %}
-                  </p>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Summary Stats -->
-    {% if interactions %}
-    <div class="mt-4 text-center">
-      <p class="text-muted mb-0" style="font-size: var(--cl-sm);">
-        Showing {{ interactions|length }} report{{ interactions|length|pluralize }}
-        {% if filter_level %}
-          with severity "{{ filter_level }}"
-        {% endif %}
-      </p>
-    </div>
-    {% endif %}
-  </div>
-</div>
-
-<style>
+    <style>
 .table tbody tr:hover {
   background-color: var(--cl-muted-bg);
 }
-</style>
+    </style>
 {% endblock %}
-

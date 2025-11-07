@@ -1,29 +1,30 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block content %}
-<div class="container py-5">
-  <div class="row">
-    <div class="col-lg-6 mx-auto">
-      <div class="card" style="border: 1px solid var(--cl-border);">
-        <div class="card-header bg-transparent border-bottom">
-          <h3 class="mb-0 d-flex align-items-center gap-2" style="font-size: var(--cl-h3); color: var(--cl-text);">
-            <i class="fas fa-sign-in-alt"></i>Login
-          </h3>
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-lg-6 mx-auto">
+                <div class="card" style="border: 1px solid var(--cl-border);">
+                    <div class="card-header bg-transparent border-bottom">
+                        <h3 class="mb-0 d-flex align-items-center gap-2"
+                            style="font-size: var(--cl-h3);
+                                   color: var(--cl-text)">
+                            <i class="fas fa-sign-in-alt"></i>Login
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-4">Login functionality coming soon...</p>
+                        <div class="d-flex flex-column gap-2">
+                            <a href="{% url 'home:index' %}" class="btn btn-primary">
+                                <i class="fas fa-home me-2"></i>Return to Home
+                            </a>
+                            <a href="{% url 'accounts:index' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-user-plus me-2"></i>Sign Up
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-          <p class="text-muted mb-4">Login functionality coming soon...</p>
-          <div class="d-flex flex-column gap-2">
-            <a href="{% url 'home:index' %}" class="btn btn-primary">
-              <i class="fas fa-home me-2"></i>Return to Home
-            </a>
-            <a href="{% url 'accounts:index' %}" class="btn btn-outline-primary">
-              <i class="fas fa-user-plus me-2"></i>Sign Up
-            </a>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
-</div>
 {% endblock %}

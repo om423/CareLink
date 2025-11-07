@@ -1,16 +1,18 @@
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib.admin.views.decorators import staff_member_required
-from django.conf import settings
-from django.http import JsonResponse
-from django.db import models
-from django.utils import timezone
-from django.views.decorators.http import require_POST
 import json
 
-from carelink.common.services.gemini_client import GeminiClient
-from .models import TriageInteraction
+from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
+from django.db import models
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
 from accounts.views import patient_required
+from carelink.common.services.gemini_client import GeminiClient
+
+from .models import TriageInteraction
 
 try:
     from profiles.models import PatientProfile
@@ -31,18 +33,15 @@ def history(request):
 
     # Get the latest interaction ID for each session
     latest_interactions = (
-        TriageInteraction.objects
-        .filter(user=request.user)
-        .values('session_id')
-        .annotate(latest_id=Max('id'))
-        .values_list('latest_id', flat=True)
+        TriageInteraction.objects.filter(user=request.user)
+        .values("session_id")
+        .annotate(latest_id=Max("id"))
+        .values_list("latest_id", flat=True)
     )
 
     # Get those interactions
-    interactions = (
-        TriageInteraction.objects
-        .filter(id__in=latest_interactions)
-        .order_by('-updated_at')
+    interactions = TriageInteraction.objects.filter(id__in=latest_interactions).order_by(
+        "-updated_at"
     )
 
     return render(request, "triage/history.html", {"interactions": interactions})
@@ -60,41 +59,35 @@ def detail(request, interaction_id):
         try:
             if PatientProfile is not None:
                 profile = PatientProfile.objects.get(user=request.user)
-                if profile.role == 'doctor':
+                if profile.role == "doctor":
                     can_view_all = True
         except Exception:
             pass
 
     if can_view_all:
-        interaction = get_object_or_404(
-            TriageInteraction, id=interaction_id
-        )
+        interaction = get_object_or_404(TriageInteraction, id=interaction_id)
         # Update status to "under_review" if it's currently "pending_review"
         if interaction.review_status == "pending_review":
             interaction.review_status = "under_review"
             interaction.save(update_fields=["review_status"])
     else:
-        interaction = get_object_or_404(
-            TriageInteraction, id=interaction_id, user=request.user
-        )
+        interaction = get_object_or_404(TriageInteraction, id=interaction_id, user=request.user)
 
     # For doctors/staff: get patient profile and history
     patient_profile = None
     patient_history = None
     if can_view_all:
         try:
-            patient_profile = PatientProfile.objects.get(
-                user=interaction.user
-            )
+            patient_profile = PatientProfile.objects.get(user=interaction.user)
         except PatientProfile.DoesNotExist:
             pass
 
         # Get patient's triage interactions (including current one for highlighting)
-        patient_history = (
-            TriageInteraction.objects
-            .filter(user=interaction.user)
-            .order_by('-created_at')[:11]  # Last 11 interactions (to show 10 others + current)
-        )
+        patient_history = TriageInteraction.objects.filter(user=interaction.user).order_by(
+            "-created_at"
+        )[
+            :11
+        ]  # Last 11 interactions (to show 10 others + current)
 
     context = {
         "interaction": interaction,
@@ -120,23 +113,20 @@ def update_doctor_notes(request, interaction_id):
         try:
             if PatientProfile is not None:
                 profile = PatientProfile.objects.get(user=request.user)
-                if profile.role == 'doctor':
+                if profile.role == "doctor":
                     can_add_notes = True
         except Exception:
             pass
 
     if not can_add_notes:
         return JsonResponse(
-            {"error": "Access denied. Only doctors/admins can add notes."},
-            status=403
+            {"error": "Access denied. Only doctors/admins can add notes."}, status=403
         )
 
     try:
         triage = TriageInteraction.objects.get(pk=interaction_id)
     except TriageInteraction.DoesNotExist:
-        return JsonResponse(
-            {"error": "Triage record not found."}, status=404
-        )
+        return JsonResponse({"error": "Triage record not found."}, status=404)
 
     notes = (request.POST.get("doctor_notes") or "").strip()
     triage.doctor_notes = notes
@@ -144,14 +134,14 @@ def update_doctor_notes(request, interaction_id):
     triage.reviewed_at = timezone.now()
     triage.save(update_fields=["doctor_notes", "reviewed_by", "reviewed_at"])
 
-    return JsonResponse({
-        "success": True,
-        "doctor_notes": triage.doctor_notes,
-        "reviewed_by": (
-            request.user.get_full_name() or request.user.username
-        ),
-        "reviewed_at": triage.reviewed_at.strftime("%Y-%m-%d %H:%M"),
-    })
+    return JsonResponse(
+        {
+            "success": True,
+            "doctor_notes": triage.doctor_notes,
+            "reviewed_by": (request.user.get_full_name() or request.user.username),
+            "reviewed_at": triage.reviewed_at.strftime("%Y-%m-%d %H:%M"),
+        }
+    )
 
 
 def get_patient_context(user):
@@ -165,12 +155,8 @@ def get_patient_context(user):
             patient_ctx = {
                 "age": getattr(prof, "age", None),
                 "weight": weight,
-                "medical_history": (
-                    (getattr(prof, "medical_history", None) or "")[:300] or None
-                ),
-                "allergies": (
-                    (getattr(prof, "allergies", None) or "")[:200] or None
-                ),
+                "medical_history": ((getattr(prof, "medical_history", None) or "")[:300] or None),
+                "allergies": ((getattr(prof, "allergies", None) or "")[:200] or None),
             }
         except Exception:
             patient_ctx = {}
@@ -216,13 +202,9 @@ def chat_api(request):
         all_symptoms.append(symptoms)
 
         # Combine all symptoms for comprehensive assessment
-        combined_symptoms = (
-            "\n\nAdditional information: ".join(all_symptoms)
-        )
+        combined_symptoms = "\n\nAdditional information: ".join(all_symptoms)
 
-        result = client.generate_triage(
-            combined_symptoms, patient_context=patient_ctx
-        )
+        result = client.generate_triage(combined_symptoms, patient_context=patient_ctx)
 
         # Persist or update interaction with full context based on session_id
         try:
@@ -232,11 +214,11 @@ def chat_api(request):
                     user=request.user,
                     session_id=session_id,
                     defaults={
-                        'symptoms_text': combined_symptoms,
-                        'severity': result.get("severity"),
-                        'result': result,
-                        'review_status': 'pending_review',
-                    }
+                        "symptoms_text": combined_symptoms,
+                        "severity": result.get("severity"),
+                        "result": result,
+                        "review_status": "pending_review",
+                    },
                 )
                 # If interaction already exists, update it with latest information
                 if not created:
@@ -251,22 +233,20 @@ def chat_api(request):
                     symptoms_text=combined_symptoms,
                     severity=result.get("severity"),
                     result=result,
-                    review_status='pending_review',
+                    review_status="pending_review",
                 )
         except Exception:
             # non-fatal; do not block UI if persistence fails
             pass
 
-        return JsonResponse({
-            "success": True,
-            "result": result
-        })
+        return JsonResponse({"success": True, "result": result})
     except RuntimeError as e:
         return JsonResponse({"error": str(e)}, status=500)
     except Exception as e:
-        return JsonResponse({
-            "error": f"Sorry — something went wrong generating your preliminary assessment: {e}"
-        }, status=500)
+        return JsonResponse(
+            {"error": f"Sorry — something went wrong generating your preliminary assessment: {e}"},
+            status=500,
+        )
 
 
 @login_required
@@ -283,7 +263,7 @@ def mark_review_completed(request, interaction_id):
         try:
             if PatientProfile is not None:
                 profile = PatientProfile.objects.get(user=request.user)
-                if profile.role == 'doctor':
+                if profile.role == "doctor":
                     can_complete_review = True
         except Exception:
             pass
@@ -291,23 +271,23 @@ def mark_review_completed(request, interaction_id):
     if not can_complete_review:
         return JsonResponse(
             {"error": "Access denied. Only doctors/admins can mark reviews as completed."},
-            status=403
+            status=403,
         )
 
     try:
         triage = TriageInteraction.objects.get(pk=interaction_id)
     except TriageInteraction.DoesNotExist:
-        return JsonResponse(
-            {"error": "Triage record not found."}, status=404
-        )
+        return JsonResponse({"error": "Triage record not found."}, status=404)
 
     triage.review_status = "finished_review"
     triage.save(update_fields=["review_status"])
 
-    return JsonResponse({
-        "success": True,
-        "review_status": triage.review_status,
-    })
+    return JsonResponse(
+        {
+            "success": True,
+            "review_status": triage.review_status,
+        }
+    )
 
 
 @staff_member_required

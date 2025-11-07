@@ -1,21 +1,17 @@
 import pytest
-from django.urls import reverse
 from django.contrib.auth.models import User
+from django.urls import reverse
+
 from triage.models import TriageInteraction
 
 
 @pytest.mark.django_db
 def test_staff_can_add_notes(client):
     """Test that staff users can add notes to triage reports."""
-    staff = User.objects.create_user(
-        "doc", password="pass", is_staff=True
-    )
+    staff = User.objects.create_user("doc", password="pass", is_staff=True)
     patient = User.objects.create_user("pat", password="pass")
     triage = TriageInteraction.objects.create(
-        user=patient,
-        severity="Moderate",
-        symptoms_text="Headache",
-        result={"summary": "Test"}
+        user=patient, severity="Moderate", symptoms_text="Headache", result={"summary": "Test"}
     )
 
     client.login(username="doc", password="pass")
@@ -34,15 +30,11 @@ def test_patient_cannot_add_notes(client):
     """Test that patients cannot add notes to triage reports."""
     user = User.objects.create_user("pat", password="pass")
     triage = TriageInteraction.objects.create(
-        user=user,
-        severity="Mild",
-        symptoms_text="Cough",
-        result={"summary": "ok"}
+        user=user, severity="Mild", symptoms_text="Cough", result={"summary": "ok"}
     )
     client.login(username="pat", password="pass")
     res = client.post(
-        reverse("triage:update_doctor_notes", args=[triage.id]),
-        {"doctor_notes": "X"}
+        reverse("triage:update_doctor_notes", args=[triage.id]), {"doctor_notes": "X"}
     )
     assert res.status_code in (302, 403)
 
@@ -50,15 +42,10 @@ def test_patient_cannot_add_notes(client):
 @pytest.mark.django_db
 def test_notes_update_timestamp(client):
     """Test that updating notes updates reviewed_at timestamp."""
-    User.objects.create_user(
-        "doc", password="pass", is_staff=True
-    )
+    User.objects.create_user("doc", password="pass", is_staff=True)
     patient = User.objects.create_user("pat", password="pass")
     triage = TriageInteraction.objects.create(
-        user=patient,
-        severity="Moderate",
-        symptoms_text="Test",
-        result={"summary": "Test"}
+        user=patient, severity="Moderate", symptoms_text="Test", result={"summary": "Test"}
     )
 
     client.login(username="doc", password="pass")
@@ -85,10 +72,7 @@ def test_has_doctor_notes_method(client):
     """Test the has_doctor_notes model method."""
     patient = User.objects.create_user("pat", password="pass")
     triage = TriageInteraction.objects.create(
-        user=patient,
-        severity="Moderate",
-        symptoms_text="Test",
-        result={"summary": "Test"}
+        user=patient, severity="Moderate", symptoms_text="Test", result={"summary": "Test"}
     )
 
     assert triage.has_doctor_notes() is False
@@ -105,9 +89,7 @@ def test_has_doctor_notes_method(client):
 @pytest.mark.django_db
 def test_patients_can_view_notes(client):
     """Test that patients can view doctor notes in read-only mode."""
-    staff = User.objects.create_user(
-        "doc", password="pass", is_staff=True
-    )
+    staff = User.objects.create_user("doc", password="pass", is_staff=True)
     patient = User.objects.create_user("pat", password="pass")
     triage = TriageInteraction.objects.create(
         user=patient,
@@ -115,7 +97,7 @@ def test_patients_can_view_notes(client):
         symptoms_text="Test symptoms",
         result={"summary": "Test summary"},
         doctor_notes="Follow up recommended",
-        reviewed_by=staff
+        reviewed_by=staff,
     )
 
     client.login(username="pat", password="pass")

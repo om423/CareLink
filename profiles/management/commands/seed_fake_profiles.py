@@ -1,8 +1,9 @@
+import random
+from decimal import Decimal
+
+from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.contrib.auth.models import User
-from decimal import Decimal
-import random
 
 from profiles.models import PatientProfile
 
@@ -121,7 +122,9 @@ class Command(BaseCommand):
             profile.save(update_fields=list(set(fields_to_update)))
             updated += 1
 
-        self.stdout.write(self.style.SUCCESS(
-            f"Profiles ensured: {users.count()}, newly created: {created}, "
-            f"updated with fake data: {updated}"
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Profiles ensured: {users.count()}, newly created: {created}, "
+                f"updated with fake data: {updated}"
+            )
+        )

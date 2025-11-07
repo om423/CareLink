@@ -2,452 +2,552 @@
 {% load static %}
 {% block title %}Triage Details · CareLink{% endblock %}
 {% block content %}
-<div style="background: var(--cl-bg); min-height: calc(100vh - 200px);">
-  <!-- Page Header -->
-  <header style="background: white; border-bottom: 1px solid var(--cl-border);">
-    <div class="container py-3">
-      <div class="d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-3">
-          {% if user.is_authenticated and user.patient_profile.role == 'patient' %}
-          <a href="{% url 'triage:history' %}" class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-text-muted);">
-            <i class="fas fa-arrow-left"></i>
-          </a>
-          {% elif user.is_authenticated and user.patient_profile.role == 'doctor' %}
-          <a href="{% url 'doctors:index' %}" class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-text-muted);">
-            <i class="fas fa-arrow-left"></i>
-          </a>
-          {% elif user.is_authenticated %}
-          <a href="{% url 'triage:admin_dashboard' %}" class="btn btn-sm" style="background: transparent; border: none; color: var(--cl-text-muted);">
-            <i class="fas fa-arrow-left"></i>
-          </a>
-          {% endif %}
-          <div>
-            <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">Triage Assessment</h2>
-            <p class="mb-0" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
-              {{ interaction.created_at|date:"F d, Y" }} at {{ interaction.created_at|date:"g:i A" }}
-            </p>
-          </div>
-        </div>
-        {% if is_doctor_view %}
-        <div class="d-flex gap-2">
-          {% if interaction.review_status != 'finished_review' %}
-          <button id="markCompletedBtn" class="btn btn-success" data-interaction-id="{{ interaction.id }}">
-            <i class="fas fa-check-circle me-2"></i>Mark Review Completed
-          </button>
-          {% else %}
-          <span class="badge bg-success" style="padding: 8px 16px; font-size: var(--cl-base);">
-            <i class="fas fa-check-circle me-2"></i>Review Completed
-          </span>
-          {% endif %}
-        </div>
-        {% elif user.is_authenticated and user.patient_profile.role == 'patient' %}
-        <div class="d-flex gap-2">
-          <a href="{% url 'triage:chat' %}" class="btn btn-outline-primary">
-            <i class="fas fa-redo me-2"></i>New Assessment
-          </a>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-  </header>
-
-  <div class="container py-4">
-    <div class="row g-4">
-      <!-- Main Content -->
-      <div class="col-lg-8">
-        <!-- 1. Patient Information Section (Doctors/Staff Only) -->
-        {% if is_doctor_view and patient_profile %}
-        <div class="card mb-4" style="border: 1px solid var(--cl-border); background: #f8f9fa;">
-          <div class="card-header bg-transparent border-bottom">
-            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
-              <i class="fas fa-user me-2" style="color: var(--cl-blue);"></i>
-              Patient Information
-            </h5>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Patient Name:</strong>
-                <div style="font-size: var(--cl-base); color: var(--cl-text); font-weight: var(--cl-font-medium);">
-                  {{ interaction.user.get_full_name|default:interaction.user.username }}
+    <div style="background: var(--cl-bg); min-height: calc(100vh - 200px);">
+        <!-- Page Header -->
+        <header style="background: white; border-bottom: 1px solid var(--cl-border);">
+            <div class="container py-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        {% if user.is_authenticated and user.patient_profile.role == 'patient' %}
+                            <a href="{% url 'triage:history' %}"
+                               class="btn btn-sm"
+                               style="background: transparent;
+                                      border: none;
+                                      color: var(--cl-text-muted)">
+                                <i class="fas fa-arrow-left"></i>
+                            </a>
+                        {% elif user.is_authenticated and user.patient_profile.role == 'doctor' %}
+                            <a href="{% url 'doctors:index' %}"
+                               class="btn btn-sm"
+                               style="background: transparent;
+                                      border: none;
+                                      color: var(--cl-text-muted)">
+                                <i class="fas fa-arrow-left"></i>
+                            </a>
+                        {% elif user.is_authenticated %}
+                            <a href="{% url 'triage:admin_dashboard' %}"
+                               class="btn btn-sm"
+                               style="background: transparent;
+                                      border: none;
+                                      color: var(--cl-text-muted)">
+                                <i class="fas fa-arrow-left"></i>
+                            </a>
+                        {% endif %}
+                        <div>
+                            <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">Triage Assessment</h2>
+                            <p class="mb-0"
+                               style="font-size: var(--cl-sm);
+                                      color: var(--cl-text-muted)">
+                                {{ interaction.created_at|date:"F d, Y" }} at {{ interaction.created_at|date:"g:i A" }}
+                            </p>
+                        </div>
+                    </div>
+                    {% if is_doctor_view %}
+                        <div class="d-flex gap-2">
+                            {% if interaction.review_status != 'finished_review' %}
+                                <button id="markCompletedBtn"
+                                        class="btn btn-success"
+                                        data-interaction-id="{{ interaction.id }}">
+                                    <i class="fas fa-check-circle me-2"></i>Mark Review Completed
+                                </button>
+                            {% else %}
+                                <span class="badge bg-success"
+                                      style="padding: 8px 16px;
+                                             font-size: var(--cl-base)">
+                                    <i class="fas fa-check-circle me-2"></i>Review Completed
+                                </span>
+                            {% endif %}
+                        </div>
+                    {% elif user.is_authenticated and user.patient_profile.role == 'patient' %}
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'triage:chat' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-redo me-2"></i>New Assessment
+                            </a>
+                        </div>
+                    {% endif %}
                 </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Email:</strong>
-                <div style="font-size: var(--cl-base); color: var(--cl-text);">
-                  {{ interaction.user.email }}
-                </div>
-              </div>
-              {% if patient_profile.age %}
-              <div class="col-md-6 mb-3">
-                <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Age:</strong>
-                <div style="font-size: var(--cl-base); color: var(--cl-text);">
-                  {{ patient_profile.age }} years
-                </div>
-              </div>
-              {% endif %}
-              {% if patient_profile.weight %}
-              <div class="col-md-6 mb-3">
-                <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Weight:</strong>
-                <div style="font-size: var(--cl-base); color: var(--cl-text);">
-                  {{ patient_profile.weight }} kg
-                </div>
-              </div>
-              {% endif %}
-              {% if patient_profile.medical_history %}
-              <div class="col-12 mb-3">
-                <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Medical History:</strong>
-                <div style="font-size: var(--cl-base); color: var(--cl-text); white-space: pre-line; margin-top: 0.25rem;">
-                  {{ patient_profile.medical_history }}
-                </div>
-              </div>
-              {% endif %}
-              {% if patient_profile.allergies %}
-              <div class="col-12 mb-0">
-                <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Allergies:</strong>
-                <div style="font-size: var(--cl-base); color: var(--cl-red); font-weight: var(--cl-font-medium); white-space: pre-line; margin-top: 0.25rem;">
-                  <i class="fas fa-exclamation-triangle me-1"></i>{{ patient_profile.allergies }}
-                </div>
-              </div>
-              {% endif %}
             </div>
-          </div>
+        </header>
+        <div class="container py-4">
+            <div class="row g-4">
+                <!-- Main Content -->
+                <div class="col-lg-8">
+                    <!-- 1. Patient Information Section (Doctors/Staff Only) -->
+                    {% if is_doctor_view and patient_profile %}
+                        <div class="card mb-4"
+                             style="border: 1px solid var(--cl-border);
+                                    background: #f8f9fa">
+                            <div class="card-header bg-transparent border-bottom">
+                                <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                    <i class="fas fa-user me-2" style="color: var(--cl-blue);"></i>
+                                    Patient Information
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Patient Name:</strong>
+                                        <div style="font-size: var(--cl-base);
+                                                    color: var(--cl-text);
+                                                    font-weight: var(--cl-font-medium)">
+                                            {{ interaction.user.get_full_name|default:interaction.user.username }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Email:</strong>
+                                        <div style="font-size: var(--cl-base); color: var(--cl-text);">{{ interaction.user.email }}</div>
+                                    </div>
+                                    {% if patient_profile.age %}
+                                        <div class="col-md-6 mb-3">
+                                            <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Age:</strong>
+                                            <div style="font-size: var(--cl-base); color: var(--cl-text);">{{ patient_profile.age }} years</div>
+                                        </div>
+                                    {% endif %}
+                                    {% if patient_profile.weight %}
+                                        <div class="col-md-6 mb-3">
+                                            <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Weight:</strong>
+                                            <div style="font-size: var(--cl-base); color: var(--cl-text);">{{ patient_profile.weight }} kg</div>
+                                        </div>
+                                    {% endif %}
+                                    {% if patient_profile.medical_history %}
+                                        <div class="col-12 mb-3">
+                                            <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Medical History:</strong>
+                                            <div style="font-size: var(--cl-base);
+                                                        color: var(--cl-text);
+                                                        white-space: pre-line;
+                                                        margin-top: 0.25rem">
+                                                {{ patient_profile.medical_history }}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if patient_profile.allergies %}
+                                        <div class="col-12 mb-0">
+                                            <strong style="color: var(--cl-text-muted); font-size: var(--cl-sm);">Allergies:</strong>
+                                            <div style="font-size: var(--cl-base);
+                                                        color: var(--cl-red);
+                                                        font-weight: var(--cl-font-medium);
+                                                        white-space: pre-line;
+                                                        margin-top: 0.25rem">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>{{ patient_profile.allergies }}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <!-- 2. Severity Card -->
+                    <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+                        <div class="card-header bg-transparent border-bottom">
+                            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                <i class="fas fa-exclamation-triangle me-2"
+                                   style="color: var(--cl-amber)"></i>
+                                Severity Assessment
+                            </h5>
+                        </div>
+                        <div class="card-body text-center py-4">
+                            <span class="badge"
+                                  style="padding:12px 24px;
+                                         font-size: var(--cl-h4);
+                                         border-radius:16px;
+                                         background: {% if interaction.severity == 'Critical' %}var(--cl-red) {% elif interaction.severity == 'Severe' %}var(--cl-amber) {% elif interaction.severity == 'Moderate' %}var(--cl-teal) {% else %}var(--cl-green){% endif %};
+                                         color:white">{{ interaction.severity|default:"Moderate" }}</span>
+                        </div>
+                    </div>
+                    <!-- 3. Symptoms Card -->
+                    <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+                        <div class="card-header bg-transparent border-bottom">
+                            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                <i class="fas fa-notes-medical me-2" style="color: var(--cl-blue);"></i>
+                                {% if is_doctor_view %}
+                                    Patient Symptoms
+                                {% else %}
+                                    Your Symptoms
+                                {% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p style="font-size: var(--cl-base);
+                                      color: var(--cl-text);
+                                      white-space: pre-line;
+                                      margin-bottom: 0">{{ interaction.symptoms_text }}</p>
+                        </div>
+                    </div>
+                    <!-- 4. AI Assessment -->
+                    <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+                        <div class="card-header bg-transparent border-bottom">
+                            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                <i class="fas fa-robot me-2" style="color: var(--cl-blue);"></i>
+                                AI Assessment
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if interaction.result %}
+                                <!-- Summary -->
+                                {% if interaction.result.summary %}
+                                    <div class="mb-4">
+                                        <h6 style="font-weight: var(--cl-font-medium);
+                                                   color: var(--cl-text);
+                                                   margin-bottom: 0.5rem">Summary</h6>
+                                        <p style="font-size: var(--cl-base); color: var(--cl-text);">{{ interaction.result.summary }}</p>
+                                    </div>
+                                {% endif %}
+                                <!-- Red Flags -->
+                                {% if interaction.result.red_flags %}
+                                    <div class="mb-4">
+                                        <h6 style="font-weight: var(--cl-font-medium);
+                                                   color: var(--cl-text);
+                                                   margin-bottom: 0.5rem">
+                                            <i class="fas fa-exclamation-circle me-2" style="color: var(--cl-red);"></i>
+                                            Red Flags
+                                        </h6>
+                                        <ul class="mb-0" style="padding-left: 1.5rem;">
+                                            {% for flag in interaction.result.red_flags %}
+                                                <li style="font-size: var(--cl-base);
+                                                           color: var(--cl-text);
+                                                           margin-bottom: 0.5rem">{{ flag }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                                <!-- Differential Diagnosis -->
+                                {% if interaction.result.differential %}
+                                    <div class="mb-4">
+                                        <h6 style="font-weight: var(--cl-font-medium);
+                                                   color: var(--cl-text);
+                                                   margin-bottom: 0.5rem">
+                                            <i class="fas fa-clipboard-list me-2" style="color: var(--cl-teal);"></i>
+                                            Possible Causes <span style="font-size: var(--cl-sm);
+              font-weight: normal;
+              color: var(--cl-text-muted)">(Not a diagnosis)</span>
+                                        </h6>
+                                        <ul class="mb-0" style="padding-left: 1.5rem;">
+                                            {% for diagnosis in interaction.result.differential %}
+                                                <li style="font-size: var(--cl-base);
+                                                           color: var(--cl-text);
+                                                           margin-bottom: 0.5rem">{{ diagnosis }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                                <!-- Advice -->
+                                {% if interaction.result.advice %}
+                                    <div class="alert"
+                                         style="background: #eff6ff;
+                                                border: 1px solid #bfdbfe;
+                                                border-radius: var(--cl-radius-md)">
+                                        <h6 style="font-weight: var(--cl-font-medium);
+                                                   color: var(--cl-text);
+                                                   margin-bottom: 0.5rem">
+                                            <i class="fas fa-lightbulb me-2" style="color: var(--cl-blue);"></i>
+                                            Advice
+                                        </h6>
+                                        <p style="font-size: var(--cl-base);
+                                                  color: var(--cl-text);
+                                                  margin-bottom: 0">{{ interaction.result.advice }}</p>
+                                    </div>
+                                {% endif %}
+                                <!-- Rationale -->
+                                {% if interaction.result.rationale %}
+                                    <div class="mb-0">
+                                        <h6 style="font-weight: var(--cl-font-medium);
+                                                   color: var(--cl-text);
+                                                   margin-bottom: 0.5rem">
+                                            <i class="fas fa-info-circle me-2" style="color: var(--cl-blue);"></i>
+                                            Rationale
+                                        </h6>
+                                        <p style="font-size: var(--cl-base);
+                                                  color: var(--cl-text);
+                                                  margin-bottom: 0">{{ interaction.result.rationale }}</p>
+                                    </div>
+                                {% endif %}
+                                <!-- Disclaimer -->
+                                <div class="alert alert-warning mt-4 mb-0"
+                                     style="border-radius: var(--cl-radius-md)">
+                                    <small style="font-size: var(--cl-sm);">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>Disclaimer:</strong> This is an informational assessment only and not a medical diagnosis. Please consult with a healthcare professional for proper medical advice.
+                                    </small>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">No assessment data available.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- 5. Doctor Notes / Feedback Section (Doctors/Staff/Admin Only) -->
+                    {% if user.is_staff or user.is_superuser or user.patient_profile.role == 'doctor' %}
+                        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+                            <div class="card-header bg-transparent border-bottom">
+                                <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                    <i class="fas fa-user-md me-2" style="color: var(--cl-blue);"></i>
+                                    Doctor Notes / Feedback
+                                </h5>
+                                <small class="text-muted">Add professional notes or feedback for accuracy</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="doctorNotesForm"
+                                      method="post"
+                                      data-interaction-id="{{ interaction.id }}">
+                                    {% csrf_token %}
+                                    <textarea name="doctor_notes"
+                                              id="doctor_notes"
+                                              rows="5"
+                                              class="form-control"
+                                              style="width: 100%;
+                                                     padding: 12px;
+                                                     border-radius: 8px;
+                                                     border: 1px solid var(--cl-border);
+                                                     font-size: var(--cl-base)"
+                                              placeholder="Enter professional notes, feedback, or recommendations...">{{ interaction.doctor_notes|default:"" }}</textarea>
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>Save Notes
+                                        </button>
+                                        {% if interaction.reviewed_by %}
+                                            <small class="text-muted" style="font-size: var(--cl-sm);">
+                                                <i class="fas fa-user-check me-1"></i>
+                                                Last reviewed by {{ interaction.reviewed_by.get_full_name|default:interaction.reviewed_by.username }}
+                                                {% if interaction.reviewed_at %}
+                                                    on {{ interaction.reviewed_at|date:"M d, Y" }} at {{ interaction.reviewed_at|date:"g:i A" }}
+                                                {% endif %}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </form>
+                                <div id="doctorNotesMessage" class="mt-3" style="min-height: 24px;"></div>
+                            </div>
+                        </div>
+                    {% elif interaction.doctor_notes %}
+                        <!-- Show doctor notes to patients (read-only) -->
+                        <div class="card mb-4"
+                             style="border: 1px solid var(--cl-border);
+                                    background: #f0f9ff">
+                            <div class="card-header bg-transparent border-bottom">
+                                <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                    <i class="fas fa-user-md me-2" style="color: var(--cl-blue);"></i>
+                                    Doctor Notes
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p style="font-size: var(--cl-base);
+                                          color: var(--cl-text);
+                                          white-space: pre-line;
+                                          margin-bottom: 0">{{ interaction.doctor_notes }}</p>
+                                {% if interaction.reviewed_by %}
+                                    <small class="text-muted mt-2 d-block" style="font-size: var(--cl-sm);">
+                                        <i class="fas fa-user-check me-1"></i>
+                                        Reviewed by {{ interaction.reviewed_by.get_full_name|default:interaction.reviewed_by.username }}
+                                        {% if interaction.reviewed_at %}
+                                            on {{ interaction.reviewed_at|date:"M d, Y" }} at {{ interaction.reviewed_at|date:"g:i A" }}
+                                        {% endif %}
+                                    </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    <!-- 6. Patient Triage History Summary (Doctors/Staff Only) -->
+                    {% if is_doctor_view and patient_history %}
+                        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+                            <div class="card-header bg-transparent border-bottom">
+                                <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                    <i class="fas fa-history me-2" style="color: var(--cl-teal);"></i>
+                                    Patient Triage History
+                                </h5>
+                                <small class="text-muted">Previous assessments for context</small>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0">
+                                        <thead style="background: var(--cl-muted-bg);">
+                                            <tr>
+                                                <th style="padding: 0.75rem;
+                                                           font-size: var(--cl-sm);
+                                                           font-weight: var(--cl-font-medium);
+                                                           color: var(--cl-text)">Date</th>
+                                                <th style="padding: 0.75rem;
+                                                           font-size: var(--cl-sm);
+                                                           font-weight: var(--cl-font-medium);
+                                                           color: var(--cl-text)">Severity</th>
+                                                <th style="padding: 0.75rem;
+                                                           font-size: var(--cl-sm);
+                                                           font-weight: var(--cl-font-medium);
+                                                           color: var(--cl-text)">Symptoms</th>
+                                                <th style="padding: 0.75rem;
+                                                           font-size: var(--cl-sm);
+                                                           font-weight: var(--cl-font-medium);
+                                                           color: var(--cl-text)">View</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for hist in patient_history %}
+                                                <tr style="border-bottom: 1px solid var(--cl-border);
+                                                           {% if hist.id == interaction.id %}background-color: #e3f2fd;
+                                                           border-left: 3px solid var(--cl-blue);
+                                                           {% endif %}">
+                                                    <td style="padding: 0.75rem;
+                                                               font-size: var(--cl-sm);
+                                                               color: var(--cl-text)">
+                                                        {{ hist.created_at|date:"M d, Y" }}
+                                                        <br>
+                                                        <small style="color: var(--cl-text-muted);">{{ hist.created_at|date:"g:i A" }}</small>
+                                                        {% if hist.id == interaction.id %}
+                                                            <br>
+                                                            <span class="badge"
+                                                                  style="background: var(--cl-blue);
+                                                                         color: white;
+                                                                         font-size: var(--cl-xs);
+                                                                         margin-top: 0.25rem">Current</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td style="padding: 0.75rem;">
+                                                        <span class="badge"
+                                                              style="padding: 4px 8px;
+                                                                     border-radius: 8px;
+                                                                     font-size: var(--cl-xs);
+                                                                     background: {% if hist.severity == 'Critical' %}var(--cl-red) {% elif hist.severity == 'Severe' %}var(--cl-amber) {% elif hist.severity == 'Moderate' %}var(--cl-teal) {% else %}var(--cl-green){% endif %};
+                                                                     color: white">
+                                                            {{ hist.severity|default:"Unknown" }}
+                                                        </span>
+                                                    </td>
+                                                    <td style="padding: 0.75rem;
+                                                               font-size: var(--cl-sm);
+                                                               color: var(--cl-text)">
+                                                        {{ hist.symptoms_text|truncatewords:10 }}
+                                                    </td>
+                                                    <td style="padding: 0.75rem;">
+                                                        {% if hist.id == interaction.id %}
+                                                            <span class="badge"
+                                                                  style="background: var(--cl-muted-bg);
+                                                                         color: var(--cl-text-muted);
+                                                                         font-size: var(--cl-xs);
+                                                                         padding: 4px 8px">
+                                                                <i class="fas fa-eye-slash me-1"></i>Viewing
+                                                            </span>
+                                                        {% else %}
+                                                            <a href="{% url 'triage:detail' hist.id %}"
+                                                               class="btn btn-sm btn-outline-primary"
+                                                               style="font-size: var(--cl-xs)">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Quick Actions -->
+                    <div class="card mb-3" style="border: 1px solid var(--cl-border);">
+                        <div class="card-header bg-transparent border-bottom">
+                            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex flex-column gap-2">
+                                {% if user.is_authenticated and user.patient_profile.role == 'patient' %}
+                                    <a href="{% url 'triage:chat' %}"
+                                       class="btn btn-primary w-100 text-start">
+                                        <i class="fas fa-redo me-2"></i>New Assessment
+                                    </a>
+                                    <a href="{% url 'doctors:find_doctor' %}"
+                                       class="btn btn-outline-primary w-100 text-start">
+                                        <i class="fas fa-map-marker-alt me-2"></i>Find Nearby Care
+                                    </a>
+                                    <a href="{% url 'appointments:index' %}"
+                                       class="btn btn-outline-success w-100 text-start">
+                                        <i class="fas fa-calendar-check me-2"></i>Book Appointment
+                                    </a>
+                                {% elif user.is_authenticated and user.patient_profile.role == 'doctor' %}
+                                    <a href="{% url 'doctors:index' %}"
+                                       class="btn btn-outline-primary w-100 text-start">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Doctor Dashboard
+                                    </a>
+                                {% elif user.is_authenticated %}
+                                    <a href="{% url 'triage:admin_dashboard' %}"
+                                       class="btn btn-outline-primary w-100 text-start">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                                    </a>
+                                {% endif %}
+                                <button onclick="window.print()"
+                                        class="btn btn-outline-secondary w-100 text-start">
+                                    <i class="fas fa-print me-2"></i>Print Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Timestamp Info -->
+                    <div class="card mb-3" style="border: 1px solid var(--cl-border);">
+                        <div class="card-header bg-transparent border-bottom">
+                            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">Assessment Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <small style="color: var(--cl-text-muted);
+                                              font-size: var(--cl-xs);
+                                              text-transform: uppercase">Date</small>
+                                <div style="font-size: var(--cl-base);
+                                            color: var(--cl-text);
+                                            font-weight: var(--cl-font-medium)">
+                                    {{ interaction.created_at|date:"F d, Y" }}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <small style="color: var(--cl-text-muted);
+                                              font-size: var(--cl-xs);
+                                              text-transform: uppercase">Time</small>
+                                <div style="font-size: var(--cl-base);
+                                            color: var(--cl-text);
+                                            font-weight: var(--cl-font-medium)">
+                                    {{ interaction.created_at|date:"g:i A" }}
+                                </div>
+                            </div>
+                            <div>
+                                <small style="color: var(--cl-text-muted);
+                                              font-size: var(--cl-xs);
+                                              text-transform: uppercase">Assessment ID</small>
+                                <div style="font-size: var(--cl-base);
+                                            color: var(--cl-text);
+                                            font-weight: var(--cl-font-medium);
+                                            font-family: monospace">#{{ interaction.id|stringformat:"05d" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Emergency Notice -->
+                    <div class="card"
+                         style="border: 2px solid var(--cl-red);
+                                background: #fef2f2">
+                        <div class="card-body">
+                            <div class="d-flex gap-3">
+                                <i class="fas fa-exclamation-triangle fa-lg"
+                                   style="color: var(--cl-red);
+                                          flex-shrink: 0;
+                                          margin-top: 0.125rem"></i>
+                                <div>
+                                    <h6 class="mb-2"
+                                        style="color: var(--cl-red);
+                                               font-weight: var(--cl-font-medium)">Emergency?</h6>
+                                    <p class="mb-3"
+                                       style="font-size: var(--cl-xs);
+                                              color: var(--cl-text-muted)">
+                                        If you're experiencing a medical emergency, call 911 immediately.
+                                    </p>
+                                    <button class="btn btn-danger btn-sm w-100">Call 911</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
-
-        <!-- 2. Severity Card -->
-        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
-          <div class="card-header bg-transparent border-bottom">
-            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
-              <i class="fas fa-exclamation-triangle me-2" style="color: var(--cl-amber);"></i>
-              Severity Assessment
-            </h5>
-          </div>
-          <div class="card-body text-center py-4">
-            <span class="badge" style="padding:12px 24px; font-size: var(--cl-h4); border-radius:16px; background:
-              {% if interaction.severity == 'Critical' %}var(--cl-red)
-              {% elif interaction.severity == 'Severe' %}var(--cl-amber)
-              {% elif interaction.severity == 'Moderate' %}var(--cl-teal)
-              {% else %}var(--cl-green){% endif %}; color:white;">
-              {{ interaction.severity|default:"Moderate" }}
-            </span>
-          </div>
-        </div>
-
-        <!-- 3. Symptoms Card -->
-        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
-          <div class="card-header bg-transparent border-bottom">
-            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
-              <i class="fas fa-notes-medical me-2" style="color: var(--cl-blue);"></i>
-              {% if is_doctor_view %}Patient Symptoms{% else %}Your Symptoms{% endif %}
-            </h5>
-          </div>
-          <div class="card-body">
-            <p style="font-size: var(--cl-base); color: var(--cl-text); white-space: pre-line; margin-bottom: 0;">{{ interaction.symptoms_text }}</p>
-          </div>
-        </div>
-
-        <!-- 4. AI Assessment -->
-        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
-          <div class="card-header bg-transparent border-bottom">
-            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
-              <i class="fas fa-robot me-2" style="color: var(--cl-blue);"></i>
-              AI Assessment
-            </h5>
-          </div>
-          <div class="card-body">
-            {% if interaction.result %}
-              <!-- Summary -->
-              {% if interaction.result.summary %}
-              <div class="mb-4">
-                <h6 style="font-weight: var(--cl-font-medium); color: var(--cl-text); margin-bottom: 0.5rem;">
-                  Summary
-                </h6>
-                <p style="font-size: var(--cl-base); color: var(--cl-text);">{{ interaction.result.summary }}</p>
-              </div>
-              {% endif %}
-
-              <!-- Red Flags -->
-              {% if interaction.result.red_flags %}
-              <div class="mb-4">
-                <h6 style="font-weight: var(--cl-font-medium); color: var(--cl-text); margin-bottom: 0.5rem;">
-                  <i class="fas fa-exclamation-circle me-2" style="color: var(--cl-red);"></i>
-                  Red Flags
-                </h6>
-                <ul class="mb-0" style="padding-left: 1.5rem;">
-                  {% for flag in interaction.result.red_flags %}
-                  <li style="font-size: var(--cl-base); color: var(--cl-text); margin-bottom: 0.5rem;">{{ flag }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-              {% endif %}
-
-              <!-- Differential Diagnosis -->
-              {% if interaction.result.differential %}
-              <div class="mb-4">
-                <h6 style="font-weight: var(--cl-font-medium); color: var(--cl-text); margin-bottom: 0.5rem;">
-                  <i class="fas fa-clipboard-list me-2" style="color: var(--cl-teal);"></i>
-                  Possible Causes <span style="font-size: var(--cl-sm); font-weight: normal; color: var(--cl-text-muted);">(Not a diagnosis)</span>
-                </h6>
-                <ul class="mb-0" style="padding-left: 1.5rem;">
-                  {% for diagnosis in interaction.result.differential %}
-                  <li style="font-size: var(--cl-base); color: var(--cl-text); margin-bottom: 0.5rem;">{{ diagnosis }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-              {% endif %}
-
-              <!-- Advice -->
-              {% if interaction.result.advice %}
-              <div class="alert" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--cl-radius-md);">
-                <h6 style="font-weight: var(--cl-font-medium); color: var(--cl-text); margin-bottom: 0.5rem;">
-                  <i class="fas fa-lightbulb me-2" style="color: var(--cl-blue);"></i>
-                  Advice
-                </h6>
-                <p style="font-size: var(--cl-base); color: var(--cl-text); margin-bottom: 0;">{{ interaction.result.advice }}</p>
-              </div>
-              {% endif %}
-
-              <!-- Rationale -->
-              {% if interaction.result.rationale %}
-              <div class="mb-0">
-                <h6 style="font-weight: var(--cl-font-medium); color: var(--cl-text); margin-bottom: 0.5rem;">
-                  <i class="fas fa-info-circle me-2" style="color: var(--cl-blue);"></i>
-                  Rationale
-                </h6>
-                <p style="font-size: var(--cl-base); color: var(--cl-text); margin-bottom: 0;">{{ interaction.result.rationale }}</p>
-              </div>
-              {% endif %}
-
-              <!-- Disclaimer -->
-              <div class="alert alert-warning mt-4 mb-0" style="border-radius: var(--cl-radius-md);">
-                <small style="font-size: var(--cl-sm);">
-                  <i class="fas fa-info-circle me-2"></i>
-                  <strong>Disclaimer:</strong> This is an informational assessment only and not a medical diagnosis. Please consult with a healthcare professional for proper medical advice.
-                </small>
-              </div>
-            {% else %}
-              <p class="text-muted mb-0">No assessment data available.</p>
-            {% endif %}
-          </div>
-        </div>
-
-        <!-- 5. Doctor Notes / Feedback Section (Doctors/Staff/Admin Only) -->
+    </div>
+    {% if user.is_authenticated %}
         {% if user.is_staff or user.is_superuser or user.patient_profile.role == 'doctor' %}
-        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
-          <div class="card-header bg-transparent border-bottom">
-            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
-              <i class="fas fa-user-md me-2" style="color: var(--cl-blue);"></i>
-              Doctor Notes / Feedback
-            </h5>
-            <small class="text-muted">Add professional notes or feedback for accuracy</small>
-          </div>
-          <div class="card-body">
-            <form id="doctorNotesForm" method="post" data-interaction-id="{{ interaction.id }}">
-              {% csrf_token %}
-              <textarea
-                name="doctor_notes"
-                id="doctor_notes"
-                rows="5"
-                class="form-control"
-                style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--cl-border); font-size: var(--cl-base);"
-                placeholder="Enter professional notes, feedback, or recommendations..."
-              >{{ interaction.doctor_notes|default:"" }}</textarea>
-
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <button type="submit" class="btn btn-primary">
-                  <i class="fas fa-save me-2"></i>Save Notes
-                </button>
-                {% if interaction.reviewed_by %}
-                <small class="text-muted" style="font-size: var(--cl-sm);">
-                  <i class="fas fa-user-check me-1"></i>
-                  Last reviewed by {{ interaction.reviewed_by.get_full_name|default:interaction.reviewed_by.username }}
-                  {% if interaction.reviewed_at %}
-                  on {{ interaction.reviewed_at|date:"M d, Y" }} at {{ interaction.reviewed_at|date:"g:i A" }}
-                  {% endif %}
-                </small>
-                {% endif %}
-              </div>
-            </form>
-
-            <div id="doctorNotesMessage" class="mt-3" style="min-height: 24px;"></div>
-          </div>
-        </div>
-        {% elif interaction.doctor_notes %}
-        <!-- Show doctor notes to patients (read-only) -->
-        <div class="card mb-4" style="border: 1px solid var(--cl-border); background: #f0f9ff;">
-          <div class="card-header bg-transparent border-bottom">
-            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
-              <i class="fas fa-user-md me-2" style="color: var(--cl-blue);"></i>
-              Doctor Notes
-            </h5>
-          </div>
-          <div class="card-body">
-            <p style="font-size: var(--cl-base); color: var(--cl-text); white-space: pre-line; margin-bottom: 0;">
-              {{ interaction.doctor_notes }}
-            </p>
-            {% if interaction.reviewed_by %}
-            <small class="text-muted mt-2 d-block" style="font-size: var(--cl-sm);">
-              <i class="fas fa-user-check me-1"></i>
-              Reviewed by {{ interaction.reviewed_by.get_full_name|default:interaction.reviewed_by.username }}
-              {% if interaction.reviewed_at %}
-              on {{ interaction.reviewed_at|date:"M d, Y" }} at {{ interaction.reviewed_at|date:"g:i A" }}
-              {% endif %}
-            </small>
-            {% endif %}
-          </div>
-        </div>
-        {% endif %}
-
-        <!-- 6. Patient Triage History Summary (Doctors/Staff Only) -->
-        {% if is_doctor_view and patient_history %}
-        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
-          <div class="card-header bg-transparent border-bottom">
-            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
-              <i class="fas fa-history me-2" style="color: var(--cl-teal);"></i>
-              Patient Triage History
-            </h5>
-            <small class="text-muted">Previous assessments for context</small>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-sm mb-0">
-                <thead style="background: var(--cl-muted-bg);">
-                  <tr>
-                    <th style="padding: 0.75rem; font-size: var(--cl-sm); font-weight: var(--cl-font-medium); color: var(--cl-text);">Date</th>
-                    <th style="padding: 0.75rem; font-size: var(--cl-sm); font-weight: var(--cl-font-medium); color: var(--cl-text);">Severity</th>
-                    <th style="padding: 0.75rem; font-size: var(--cl-sm); font-weight: var(--cl-font-medium); color: var(--cl-text);">Symptoms</th>
-                    <th style="padding: 0.75rem; font-size: var(--cl-sm); font-weight: var(--cl-font-medium); color: var(--cl-text);">View</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for hist in patient_history %}
-                  <tr style="border-bottom: 1px solid var(--cl-border); {% if hist.id == interaction.id %}background-color: #e3f2fd; border-left: 3px solid var(--cl-blue);{% endif %}">
-                    <td style="padding: 0.75rem; font-size: var(--cl-sm); color: var(--cl-text);">
-                      {{ hist.created_at|date:"M d, Y" }}<br>
-                      <small style="color: var(--cl-text-muted);">{{ hist.created_at|date:"g:i A" }}</small>
-                      {% if hist.id == interaction.id %}
-                      <br><span class="badge" style="background: var(--cl-blue); color: white; font-size: var(--cl-xs); margin-top: 0.25rem;">Current</span>
-                      {% endif %}
-                    </td>
-                    <td style="padding: 0.75rem;">
-                      <span class="badge" style="padding: 4px 8px; border-radius: 8px; font-size: var(--cl-xs);
-                        background:
-                          {% if hist.severity == 'Critical' %}var(--cl-red)
-                          {% elif hist.severity == 'Severe' %}var(--cl-amber)
-                          {% elif hist.severity == 'Moderate' %}var(--cl-teal)
-                          {% else %}var(--cl-green){% endif %};
-                        color: white;">
-                        {{ hist.severity|default:"Unknown" }}
-                      </span>
-                    </td>
-                    <td style="padding: 0.75rem; font-size: var(--cl-sm); color: var(--cl-text);">
-                      {{ hist.symptoms_text|truncatewords:10 }}
-                    </td>
-                    <td style="padding: 0.75rem;">
-                      {% if hist.id == interaction.id %}
-                      <span class="badge" style="background: var(--cl-muted-bg); color: var(--cl-text-muted); font-size: var(--cl-xs); padding: 4px 8px;">
-                        <i class="fas fa-eye-slash me-1"></i>Viewing
-                      </span>
-                      {% else %}
-                      <a href="{% url 'triage:detail' hist.id %}" class="btn btn-sm btn-outline-primary" style="font-size: var(--cl-xs);">
-                        <i class="fas fa-eye"></i>
-                      </a>
-                      {% endif %}
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        {% endif %}
-      </div>
-
-      <!-- Sidebar -->
-      <div class="col-lg-4">
-        <!-- Quick Actions -->
-        <div class="card mb-3" style="border: 1px solid var(--cl-border);">
-          <div class="card-header bg-transparent border-bottom">
-            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">Quick Actions</h5>
-          </div>
-          <div class="card-body">
-            <div class="d-flex flex-column gap-2">
-              {% if user.is_authenticated and user.patient_profile.role == 'patient' %}
-              <a href="{% url 'triage:chat' %}" class="btn btn-primary w-100 text-start">
-                <i class="fas fa-redo me-2"></i>New Assessment
-              </a>
-              <a href="{% url 'doctors:find_doctor' %}" class="btn btn-outline-primary w-100 text-start">
-                <i class="fas fa-map-marker-alt me-2"></i>Find Nearby Care
-              </a>
-              <a href="{% url 'appointments:index' %}" class="btn btn-outline-success w-100 text-start">
-                <i class="fas fa-calendar-check me-2"></i>Book Appointment
-              </a>
-              {% elif user.is_authenticated and user.patient_profile.role == 'doctor' %}
-              <a href="{% url 'doctors:index' %}" class="btn btn-outline-primary w-100 text-start">
-                <i class="fas fa-arrow-left me-2"></i>Back to Doctor Dashboard
-              </a>
-              {% elif user.is_authenticated %}
-              <a href="{% url 'triage:admin_dashboard' %}" class="btn btn-outline-primary w-100 text-start">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-              </a>
-              {% endif %}
-              <button onclick="window.print()" class="btn btn-outline-secondary w-100 text-start">
-                <i class="fas fa-print me-2"></i>Print Report
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Timestamp Info -->
-        <div class="card mb-3" style="border: 1px solid var(--cl-border);">
-          <div class="card-header bg-transparent border-bottom">
-            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">Assessment Details</h5>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <small style="color: var(--cl-text-muted); font-size: var(--cl-xs); text-transform: uppercase;">Date</small>
-              <div style="font-size: var(--cl-base); color: var(--cl-text); font-weight: var(--cl-font-medium);">
-                {{ interaction.created_at|date:"F d, Y" }}
-              </div>
-            </div>
-            <div class="mb-3">
-              <small style="color: var(--cl-text-muted); font-size: var(--cl-xs); text-transform: uppercase;">Time</small>
-              <div style="font-size: var(--cl-base); color: var(--cl-text); font-weight: var(--cl-font-medium);">
-                {{ interaction.created_at|date:"g:i A" }}
-              </div>
-            </div>
-            <div>
-              <small style="color: var(--cl-text-muted); font-size: var(--cl-xs); text-transform: uppercase;">Assessment ID</small>
-              <div style="font-size: var(--cl-base); color: var(--cl-text); font-weight: var(--cl-font-medium); font-family: monospace;">
-                #{{ interaction.id|stringformat:"05d" }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Emergency Notice -->
-        <div class="card" style="border: 2px solid var(--cl-red); background: #fef2f2;">
-          <div class="card-body">
-            <div class="d-flex gap-3">
-              <i class="fas fa-exclamation-triangle fa-lg" style="color: var(--cl-red); flex-shrink: 0; margin-top: 0.125rem;"></i>
-              <div>
-                <h6 class="mb-2" style="color: var(--cl-red); font-weight: var(--cl-font-medium);">Emergency?</h6>
-                <p class="mb-3" style="font-size: var(--cl-xs); color: var(--cl-text-muted);">If you're experiencing a medical emergency, call 911 immediately.</p>
-                <button class="btn btn-danger btn-sm w-100">Call 911</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-{% if user.is_authenticated %}
-  {% if user.is_staff or user.is_superuser or user.patient_profile.role == 'doctor' %}
-<script>
+            <script>
 document.getElementById("doctorNotesForm").addEventListener("submit", async function(e) {
   e.preventDefault();
   const form = e.target;
@@ -495,10 +595,10 @@ document.getElementById("doctorNotesForm").addEventListener("submit", async func
     saveButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Notes';
   }
 });
-</script>
-  {% endif %}
-  {% if is_doctor_view %}
-<script>
+            </script>
+        {% endif %}
+        {% if is_doctor_view %}
+            <script>
 const markCompletedBtn = document.getElementById("markCompletedBtn");
 if (markCompletedBtn) {
   markCompletedBtn.addEventListener("click", async function(e) {
@@ -541,7 +641,7 @@ if (markCompletedBtn) {
     }
   });
 }
-</script>
-  {% endif %}
-{% endif %}
+            </script>
+        {% endif %}
+    {% endif %}
 {% endblock %}

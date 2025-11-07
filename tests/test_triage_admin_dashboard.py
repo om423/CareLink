@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
+
 from triage.models import TriageInteraction
 
 
@@ -27,9 +28,7 @@ def test_dashboard_access_allows_staff(client):
 @pytest.mark.django_db
 def test_dashboard_access_allows_superuser(client):
     """Test that superusers can access the admin dashboard."""
-    User.objects.create_superuser(
-        "admin", "admin@example.com", "pass12345"
-    )
+    User.objects.create_superuser("admin", "admin@example.com", "pass12345")
     client.login(username="admin", password="pass12345")
     r = client.get(reverse("triage:admin_dashboard"))
     assert r.status_code == 200
@@ -48,10 +47,7 @@ def test_dashboard_lists_interactions(client):
         user=patient,
         symptoms_text="Headache and fever",
         severity="Critical",
-        result={
-            "summary": "Possible severe condition requiring immediate "
-            "attention"
-        }
+        result={"summary": "Possible severe condition requiring immediate " "attention"},
     )
 
     r = client.get(reverse("triage:admin_dashboard"))
@@ -77,19 +73,19 @@ def test_dashboard_orders_by_severity(client):
         user=patient1,
         symptoms_text="Mild symptoms",
         severity="Mild",
-        result={"summary": "Mild condition"}
+        result={"summary": "Mild condition"},
     )
     TriageInteraction.objects.create(
         user=patient2,
         symptoms_text="Critical symptoms",
         severity="Critical",
-        result={"summary": "Critical condition"}
+        result={"summary": "Critical condition"},
     )
     TriageInteraction.objects.create(
         user=patient3,
         symptoms_text="Moderate symptoms",
         severity="Moderate",
-        result={"summary": "Moderate condition"}
+        result={"summary": "Moderate condition"},
     )
 
     r = client.get(reverse("triage:admin_dashboard"))
@@ -122,13 +118,13 @@ def test_dashboard_filter_by_severity(client):
         user=patient1,
         symptoms_text="Critical symptoms",
         severity="Critical",
-        result={"summary": "Critical condition"}
+        result={"summary": "Critical condition"},
     )
     TriageInteraction.objects.create(
         user=patient2,
         symptoms_text="Mild symptoms",
         severity="Mild",
-        result={"summary": "Mild condition"}
+        result={"summary": "Mild condition"},
     )
 
     # Filter by Critical
@@ -155,7 +151,7 @@ def test_dashboard_shows_patient_info(client):
         password="pass12345",
         email="patient@example.com",
         first_name="John",
-        last_name="Doe"
+        last_name="Doe",
     )
     client.login(username="doc", password="pass12345")
 
@@ -163,7 +159,7 @@ def test_dashboard_shows_patient_info(client):
         user=patient,
         symptoms_text="Test symptoms",
         severity="Moderate",
-        result={"summary": "Test summary"}
+        result={"summary": "Test summary"},
     )
 
     r = client.get(reverse("triage:admin_dashboard"))
@@ -184,7 +180,7 @@ def test_dashboard_view_link_works(client):
         user=patient,
         symptoms_text="Test symptoms",
         severity="Moderate",
-        result={"summary": "Test summary"}
+        result={"summary": "Test summary"},
     )
 
     r = client.get(reverse("triage:admin_dashboard"))
@@ -206,7 +202,7 @@ def test_staff_can_view_any_patient_detail(client):
         user=patient,
         symptoms_text="Patient symptoms",
         severity="Severe",
-        result={"summary": "Patient summary"}
+        result={"summary": "Patient summary"},
     )
 
     r = client.get(reverse("triage:detail", args=[interaction.id]))

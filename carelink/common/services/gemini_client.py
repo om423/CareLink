@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import json
 import re
 import time
@@ -48,12 +49,7 @@ JSON_CLOSE = re.compile(r"\}", re.MULTILINE)
 def _strip_code_fences(s: str) -> str:
     s = s.strip()
     if s.startswith("```"):
-        s = re.sub(
-            r"^```(?:json)?\s*|\s*```$",
-            "",
-            s,
-            flags=re.IGNORECASE | re.DOTALL
-        )
+        s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s, flags=re.IGNORECASE | re.DOTALL)
     return s.strip()
 
 
@@ -84,14 +80,10 @@ class GeminiClient:
       - rationale: str
     """
 
-    def __init__(
-        self, api_key: Optional[str] = None, model: str = DEFAULT_MODEL
-    ) -> None:
+    def __init__(self, api_key: Optional[str] = None, model: str = DEFAULT_MODEL) -> None:
         self.api_key = api_key
         self.model = model
-        self.enabled = bool(api_key) and (
-            genai_new is not None or genai_legacy is not None
-        )
+        self.enabled = bool(api_key) and (genai_new is not None or genai_legacy is not None)
         self._api_variant = None  # "new" | "legacy" | None
         self._client = None
         self._model_obj = None
@@ -134,9 +126,7 @@ class GeminiClient:
                 self._api_variant = None
 
     def generate_triage(
-        self,
-        symptoms_text: str,
-        patient_context: Optional[Dict[str, Any]] = None
+        self, symptoms_text: str, patient_context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Returns a dict; if API missing/unavailable, raises RuntimeError.
@@ -155,9 +145,7 @@ class GeminiClient:
                 "severity": data.get("severity", "Moderate"),
                 "summary": data.get("summary", "No summary provided."),
                 "advice": data.get(
-                    "advice",
-                    "Consider contacting a healthcare professional "
-                    "for guidance."
+                    "advice", "Consider contacting a healthcare professional " "for guidance."
                 ),
                 "red_flags": data.get("red_flags", []) or [],
                 "differential": data.get("differential", []) or [],
@@ -167,10 +155,7 @@ class GeminiClient:
             return {
                 "severity": "Moderate",
                 "summary": "Unable to parse model response.",
-                "advice": (
-                    "Consider contacting a healthcare professional "
-                    "for guidance."
-                ),
+                "advice": ("Consider contacting a healthcare professional " "for guidance."),
                 "red_flags": [],
                 "differential": [],
                 "rationale": "Fallback response.",
@@ -191,23 +176,18 @@ class GeminiClient:
                     last_err = None
                     for model_name in [self.model] + FALLBACK_MODELS:
                         try:
-                            contents = [
-                                {"role": "user", "parts": [{"text": prompt}]}
-                            ]
+                            contents = [{"role": "user", "parts": [{"text": prompt}]}]
                             resp = self._client.models.generate_content(
                                 model=model_name, contents=contents
                             )
                             text = getattr(resp, "text", "") or ""
                             if not text:
                                 try:
-                                    parts = (
-                                        getattr(resp, "candidates", [])[0]
-                                        .content.parts  # type: ignore
-                                    )
+                                    parts = getattr(resp, "candidates", [])[
+                                        0
+                                    ].content.parts  # type: ignore
                                     text = "".join(
-                                        getattr(p, "text", "")
-                                        for p in parts
-                                        if hasattr(p, "text")
+                                        getattr(p, "text", "") for p in parts if hasattr(p, "text")
                                     )
                                 except Exception:
                                     text = ""
@@ -225,25 +205,20 @@ class GeminiClient:
                         try:
                             if (
                                 model_obj is None
-                                or getattr(model_obj, "model_name", None)
-                                != model_name
+                                or getattr(model_obj, "model_name", None) != model_name
                             ):
                                 model_obj = genai_legacy.GenerativeModel(
-                                    model_name,
-                                    system_instruction=SYSTEM_INSTRUCTIONS
+                                    model_name, system_instruction=SYSTEM_INSTRUCTIONS
                                 )
                             resp = model_obj.generate_content(prompt)
                             text = getattr(resp, "text", "") or ""
                             if not text:
                                 try:
-                                    parts = (
-                                        getattr(resp, "candidates", [])[0]
-                                        .content.parts  # type: ignore
-                                    )
+                                    parts = getattr(resp, "candidates", [])[
+                                        0
+                                    ].content.parts  # type: ignore
                                     text = "".join(
-                                        getattr(p, "text", "")
-                                        for p in parts
-                                        if hasattr(p, "text")
+                                        getattr(p, "text", "") for p in parts if hasattr(p, "text")
                                     )
                                 except Exception:
                                     text = ""
@@ -305,16 +280,12 @@ class GeminiClient:
             "advice": "Consider contacting a healthcare professional for guidance.",
             "red_flags": [],
             "differential": [],
-            "rationale": (
-                "Fallback response; JSON parsing failed after repair."
-            ),
+            "rationale": ("Fallback response; JSON parsing failed after repair."),
         }
 
     # Explicit prompt builder for testability
     def _build_prompt(
-        self,
-        symptoms_text: str,
-        patient_context: Optional[Dict[str, Any]] = None
+        self, symptoms_text: str, patient_context: Optional[Dict[str, Any]] = None
     ) -> str:
         def safe(val: Any) -> str:
             if val is None:

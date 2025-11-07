@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+
 from profiles.models import PatientProfile
 
 
@@ -20,7 +21,7 @@ def seed_users():
                 "first_name": first,
                 "last_name": last,
                 "email": f"{first.lower()}@example.com",
-            }
+            },
         )
         if created:
             user.set_password("password123")

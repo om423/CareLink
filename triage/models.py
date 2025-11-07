@@ -1,25 +1,18 @@
-from django.db import models
-from django.contrib.auth.models import User
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.db import models
 
 
 class TriageInteraction(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="triage_interactions"
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="triage_interactions")
     session_id = models.CharField(
-        max_length=255,
-        blank=True,
-        null=True,
-        help_text="Unique identifier for chat session"
+        max_length=255, blank=True, null=True, help_text="Unique identifier for chat session"
     )
     symptoms_text = models.TextField()
     severity = models.CharField(max_length=20, blank=True, null=True)
     result = models.JSONField(blank=True, null=True)
     doctor_notes = models.TextField(
-        blank=True,
-        null=True,
-        help_text="Professional notes or feedback from doctor/admin"
+        blank=True, null=True, help_text="Professional notes or feedback from doctor/admin"
     )
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -27,12 +20,10 @@ class TriageInteraction(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="triage_reviews",
-        help_text="Doctor/admin who reviewed this triage report"
+        help_text="Doctor/admin who reviewed this triage report",
     )
     reviewed_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Timestamp when doctor notes were last updated"
+        null=True, blank=True, help_text="Timestamp when doctor notes were last updated"
     )
     review_status = models.CharField(
         max_length=20,
@@ -42,7 +33,7 @@ class TriageInteraction(models.Model):
             ("finished_review", "Finished Review"),
         ],
         default="pending_review",
-        help_text="Current status of the triage review process"
+        help_text="Current status of the triage review process",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

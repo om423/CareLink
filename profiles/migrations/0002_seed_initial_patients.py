@@ -1,5 +1,5 @@
-from django.db import migrations
 from django.contrib.auth.hashers import make_password
+from django.db import migrations
 
 
 def seed_initial_patients(apps, schema_editor):
@@ -100,5 +100,3 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(seed_initial_patients, reverse_code=unseed_initial_patients),
     ]
-
-

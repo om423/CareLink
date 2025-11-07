@@ -39,16 +39,10 @@ def test_triage_chat_post_monkeypatched(client, monkeypatch):
             "rationale": "Based on reported fever and sore throat.",
         }
 
-    monkeypatch.setattr(
-        gemini_client.GeminiClient, "_build_prompt", wrapper_build
-    )
-    monkeypatch.setattr(
-        gemini_client.GeminiClient, "generate_triage", fake_generate
-    )
+    monkeypatch.setattr(gemini_client.GeminiClient, "_build_prompt", wrapper_build)
+    monkeypatch.setattr(gemini_client.GeminiClient, "generate_triage", fake_generate)
 
-    r = client.post(
-        reverse("triage:chat"), {"symptoms": "fever and sore throat"}
-    )
+    r = client.post(reverse("triage:chat"), {"symptoms": "fever and sore throat"})
     assert r.status_code == 200
     # ensure the rendered template contains expected strings
     content = r.content.decode()
@@ -75,16 +69,17 @@ class FakeResp:
 def test_build_prompt_unknown_defaults(monkeypatch, settings):
     settings.GEMINI_API_KEY = "fake"
     from carelink.common.services.gemini_client import GeminiClient
+
     client = GeminiClient(api_key="fake")
 
     prompt = client._build_prompt("headache & nausea", patient_context={})
-    assert 'PATIENT_CONTEXT' in prompt
+    assert "PATIENT_CONTEXT" in prompt
     assert '"age": "Unknown"' in prompt
     assert '"weight": "Unknown"' in prompt
     assert '"allergies": "None reported"' in prompt
     assert '"medical_history": "None reported"' in prompt
-    assert 'PATIENT_SYMPTOM_DESCRIPTION' in prompt
-    assert 'headache & nausea' in prompt
+    assert "PATIENT_SYMPTOM_DESCRIPTION" in prompt
+    assert "headache & nausea" in prompt
 
 
 @pytest.mark.django_db
@@ -99,9 +94,7 @@ def test_json_repair_flow(client, monkeypatch, settings):
         def generate_content(self, prompt):
             FakeModel.calls += 1
             if FakeModel.calls == 1:
-                return FakeResp(
-                    '```json\n{"severity":"Moderate","summary":"X"\n```'
-                )
+                return FakeResp('```json\n{"severity":"Moderate","summary":"X"\n```')
             else:
                 return FakeResp(
                     '{"severity":"Mild","summary":"OK","advice":"Hydrate",'
@@ -109,19 +102,34 @@ def test_json_repair_flow(client, monkeypatch, settings):
                 )
 
     from carelink.common.services import gemini_client
+
     # Patch new SDK path to use our fake model
     monkeypatch.setattr(
-        gemini_client, "genai_new",
-        type("GNew", (), {
-            "Client": lambda api_key=None: type("C", (), {
-                "models": type("M", (), {
-                    "generate_content": (
-                        lambda self=None, model=None, contents=None:
-                        FakeModel().generate_content("")
-                    )
-                })()
-            })()
-        })()
+        gemini_client,
+        "genai_new",
+        type(
+            "GNew",
+            (),
+            {
+                "Client": lambda api_key=None: type(
+                    "C",
+                    (),
+                    {
+                        "models": type(
+                            "M",
+                            (),
+                            {
+                                "generate_content": (
+                                    lambda self=None, model=None, contents=None: FakeModel().generate_content(
+                                        ""
+                                    )
+                                )
+                            },
+                        )()
+                    },
+                )()
+            },
+        )(),
     )
     # Skip sleep
     monkeypatch.setattr(gemini_client.time, "sleep", lambda s: None)
@@ -152,18 +160,33 @@ def test_transient_error_backoff(client, monkeypatch, settings):
             )
 
     from carelink.common.services import gemini_client
+
     monkeypatch.setattr(
-        gemini_client, "genai_new",
-        type("GNew", (), {
-            "Client": lambda api_key=None: type("C", (), {
-                "models": type("M", (), {
-                    "generate_content": (
-                        lambda self=None, model=None, contents=None:
-                        FlakyModel().generate_content("")
-                    )
-                })()
-            })()
-        })()
+        gemini_client,
+        "genai_new",
+        type(
+            "GNew",
+            (),
+            {
+                "Client": lambda api_key=None: type(
+                    "C",
+                    (),
+                    {
+                        "models": type(
+                            "M",
+                            (),
+                            {
+                                "generate_content": (
+                                    lambda self=None, model=None, contents=None: FlakyModel().generate_content(
+                                        ""
+                                    )
+                                )
+                            },
+                        )()
+                    },
+                )()
+            },
+        )(),
     )
     monkeypatch.setattr(gemini_client.time, "sleep", lambda s: None)
 
@@ -182,6 +205,7 @@ def test_context_card_rendered(client, settings):
 
     try:
         from profiles.models import PatientProfile
+
         PatientProfile.objects.create(
             user=user,
             age=44,
