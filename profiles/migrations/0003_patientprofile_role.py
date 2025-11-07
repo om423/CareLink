@@ -6,13 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('profiles', '0002_alter_patientprofile_options_and_more'),
+        ("profiles", "0002_alter_patientprofile_options_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='patientprofile',
-            name='role',
-            field=models.CharField(choices=[('patient', 'Patient'), ('doctor', 'Doctor/Admin')], default='patient', help_text='User role: Patient or Doctor/Admin', max_length=20),
+            model_name="patientprofile",
+            name="role",
+            field=models.CharField(
+                choices=[("patient", "Patient"), ("doctor", "Doctor/Admin")],
+                default="patient",
+                help_text="User role: Patient or Doctor/Admin",
+                max_length=20,
+            ),
         ),
     ]

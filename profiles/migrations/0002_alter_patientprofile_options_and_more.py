@@ -6,22 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('profiles', '0001_initial'),
+        ("profiles", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='patientprofile',
-            options={'ordering': ['-created_at'], 'verbose_name': 'Patient Profile', 'verbose_name_plural': 'Patient Profiles'},
+            name="patientprofile",
+            options={
+                "ordering": ["-created_at"],
+                "verbose_name": "Patient Profile",
+                "verbose_name_plural": "Patient Profiles",
+            },
         ),
         migrations.AlterField(
-            model_name='patientprofile',
-            name='allergies',
-            field=models.TextField(blank=True, help_text='Known allergies (medications, foods, environmental)'),
+            model_name="patientprofile",
+            name="allergies",
+            field=models.TextField(
+                blank=True, help_text="Known allergies (medications, foods, environmental)"
+            ),
         ),
         migrations.AlterField(
-            model_name='patientprofile',
-            name='medical_history',
-            field=models.TextField(blank=True, help_text='Previous medical conditions and history'),
+            model_name="patientprofile",
+            name="medical_history",
+            field=models.TextField(blank=True, help_text="Previous medical conditions and history"),
         ),
     ]

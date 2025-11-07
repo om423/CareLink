@@ -8,15 +8,18 @@ def test_home_ok(client):
     assert resp.status_code == 200
 
 
-@pytest.mark.parametrize("path", [
-    "/accounts/",
-    "/profiles/",
-    "/triage/",
-    "/doctors/",
-    "/appointments/",
-    "/healthz/",
-    "/readyz/",
-])
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/accounts/",
+        "/profiles/",
+        "/triage/",
+        "/doctors/",
+        "/appointments/",
+        "/healthz/",
+        "/readyz/",
+    ],
+)
 def test_placeholders_ok(client, path):
     r = client.get(path)
     assert r.status_code in (200, 302)

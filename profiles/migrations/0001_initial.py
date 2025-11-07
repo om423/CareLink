@@ -15,21 +15,59 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='PatientProfile',
+            name="PatientProfile",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('age', models.PositiveIntegerField(blank=True, help_text="Patient's age in years", null=True)),
-                ('weight', models.DecimalField(blank=True, decimal_places=2, help_text='Weight in kg', max_digits=5, null=True)),
-                ('medical_history', models.TextField(blank=True, help_text='Previous medical conditions, surgeries, chronic illnesses')),
-                ('allergies', models.TextField(blank=True, help_text='Known allergies (medications, foods, environmental, etc.)')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='patient_profile', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "age",
+                    models.PositiveIntegerField(
+                        blank=True, help_text="Patient's age in years", null=True
+                    ),
+                ),
+                (
+                    "weight",
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        help_text="Weight in kg",
+                        max_digits=5,
+                        null=True,
+                    ),
+                ),
+                (
+                    "medical_history",
+                    models.TextField(
+                        blank=True,
+                        help_text="Previous medical conditions, surgeries, chronic illnesses",
+                    ),
+                ),
+                (
+                    "allergies",
+                    models.TextField(
+                        blank=True,
+                        help_text="Known allergies (medications, foods, environmental, etc.)",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="patient_profile",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Patient Profile',
-                'verbose_name_plural': 'Patient Profiles',
-                'ordering': ['-updated_at'],
+                "verbose_name": "Patient Profile",
+                "verbose_name_plural": "Patient Profiles",
+                "ordering": ["-updated_at"],
             },
         ),
     ]
