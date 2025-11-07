@@ -1,0 +1,61 @@
+{% load humanize %}
+<div class="col-12">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+      <h3 class="h5 mb-0">Priority Queue (Unassigned)</h3>
+      <span class="badge bg-danger">{{ priority_queue|length }} waiting</span>
+    </div>
+    <div class="card-body">
+      {% if priority_queue %}
+        <div class="row g-3">
+          {% for triage in priority_queue %}
+            {% include 'doctors/partials/triage_card.html' with triage=triage show_assign_button=True priority=forloop.counter %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">No pending triage reports right now.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="col-12">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+      <h3 class="h5 mb-0">My Active Cases</h3>
+      <span class="badge bg-secondary">{{ my_cases|length }} assigned</span>
+    </div>
+    <div class="card-body">
+      {% if my_cases %}
+        <div class="row g-3">
+          {% for triage in my_cases %}
+            {% include 'doctors/partials/triage_card.html' with triage=triage priority=forloop.counter %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">No cases are currently assigned to you.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="col-12">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+      <h3 class="h5 mb-0">Team In Progress</h3>
+      <span class="badge bg-light text-dark">{{ team_cases|length }} being handled</span>
+    </div>
+    <div class="card-body">
+      {% if team_cases %}
+        <div class="row g-3">
+          {% for triage in team_cases %}
+            {% include 'doctors/partials/triage_card.html' with triage=triage priority=forloop.counter %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">No team assignments in progress.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
