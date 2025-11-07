@@ -214,7 +214,7 @@ def chat_api(request):
             return JsonResponse(
                 {
                     "success": False,
-                    "error": f"Sorry — something went wrong {e}",
+                    "error": f"Sorry — something went wrong generating your preliminary assessment: {e}",
                 },
                 status=200,
             )
