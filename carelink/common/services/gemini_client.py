@@ -194,8 +194,18 @@ class GeminiClient:
                             return text
                         except Exception as e:
                             last_err = e
+                            # Continue to next model
                             continue
-                    raise RuntimeError(f"Gemini error: {last_err}")
+                    # If we exhausted all models, check if we should retry
+                    if attempt == 0 and last_err is not None:
+                        # Retry if it's a transient error
+                        if "Transient" in str(last_err):
+                            time.sleep(0.6)
+                            continue
+                    # If we can't retry, raise the error
+                    if last_err is not None:
+                        raise RuntimeError(f"Gemini error: {last_err}")
+                    raise RuntimeError("No models available")
 
                 # Legacy path with model fallbacks
                 elif self._api_variant == "legacy" and self._model_obj is not None:
@@ -225,8 +235,18 @@ class GeminiClient:
                             return text
                         except Exception as e:
                             last_err = e
+                            # Continue to next model
                             continue
-                    raise RuntimeError(f"Gemini error: {last_err}")
+                    # If we exhausted all models, check if we should retry
+                    if attempt == 0 and last_err is not None:
+                        # Retry if it's a transient error
+                        if "Transient" in str(last_err):
+                            time.sleep(0.6)
+                            continue
+                    # If we can't retry, raise the error
+                    if last_err is not None:
+                        raise RuntimeError(f"Gemini error: {last_err}")
+                    raise RuntimeError("No models available")
 
                 else:
                     raise RuntimeError(
@@ -235,9 +255,15 @@ class GeminiClient:
                     )
             except Exception as e:
                 last_err = e
+                # Retry on first attempt for transient errors
                 if attempt == 0:
+                    if "Transient" in str(e) or "transient" in str(e).lower():
+                        time.sleep(0.6)
+                        continue
+                    # For other errors, also retry once
                     time.sleep(0.6)
                     continue
+                # On second attempt, raise the error
                 raise
 
     def _parse_or_repair(self, raw_text: str, original_prompt: str) -> dict:

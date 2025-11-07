@@ -204,7 +204,20 @@ def chat_api(request):
         # Combine all symptoms for comprehensive assessment
         combined_symptoms = "\n\nAdditional information: ".join(all_symptoms)
 
-        result = client.generate_triage(combined_symptoms, patient_context=patient_ctx)
+        try:
+            result = client.generate_triage(combined_symptoms, patient_context=patient_ctx)
+        except RuntimeError as e:
+            # RuntimeError indicates configuration issues - return error but with 200 status
+            return JsonResponse({"success": False, "error": str(e)}, status=200)
+        except Exception as e:
+            # Other exceptions - return error with 200 status for graceful handling
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": f"Sorry — something went wrong generating your preliminary assessment: {e}",
+                },
+                status=200,
+            )
 
         # Persist or update interaction with full context based on session_id
         try:
@@ -240,12 +253,14 @@ def chat_api(request):
             pass
 
         return JsonResponse({"success": True, "result": result})
-    except RuntimeError as e:
-        return JsonResponse({"error": str(e)}, status=500)
     except Exception as e:
+        # Catch-all for any unexpected errors
         return JsonResponse(
-            {"error": f"Sorry — something went wrong generating your preliminary assessment: {e}"},
-            status=500,
+            {
+                "success": False,
+                "error": f"Sorry — something went wrong: {e}",
+            },
+            status=200,
         )
 
 
