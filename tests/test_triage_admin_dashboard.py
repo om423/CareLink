@@ -7,7 +7,7 @@ from triage.models import TriageInteraction
 @pytest.mark.django_db
 def test_dashboard_access_requires_staff(client):
     """Test that non-staff users cannot access the admin dashboard."""
-    user = User.objects.create_user("alice", password="pass12345")
+    User.objects.create_user("alice", password="pass12345")
     client.login(username="alice", password="pass12345")
     r = client.get(reverse("triage:admin_dashboard"))
     # Should redirect to login or return 403
@@ -17,7 +17,7 @@ def test_dashboard_access_requires_staff(client):
 @pytest.mark.django_db
 def test_dashboard_access_allows_staff(client):
     """Test that staff users can access the admin dashboard."""
-    staff = User.objects.create_user("doc", password="pass12345", is_staff=True)
+    User.objects.create_user("doc", password="pass12345", is_staff=True)
     client.login(username="doc", password="pass12345")
     r = client.get(reverse("triage:admin_dashboard"))
     assert r.status_code == 200
@@ -27,7 +27,9 @@ def test_dashboard_access_allows_staff(client):
 @pytest.mark.django_db
 def test_dashboard_access_allows_superuser(client):
     """Test that superusers can access the admin dashboard."""
-    admin = User.objects.create_superuser("admin", "admin@example.com", "pass12345")
+    User.objects.create_superuser(
+        "admin", "admin@example.com", "pass12345"
+    )
     client.login(username="admin", password="pass12345")
     r = client.get(reverse("triage:admin_dashboard"))
     assert r.status_code == 200
@@ -37,18 +39,21 @@ def test_dashboard_access_allows_superuser(client):
 @pytest.mark.django_db
 def test_dashboard_lists_interactions(client):
     """Test that dashboard displays triage interactions."""
-    staff = User.objects.create_user("doc", password="pass12345", is_staff=True)
+    User.objects.create_user("doc", password="pass12345", is_staff=True)
     patient = User.objects.create_user("patient", password="pass12345")
     client.login(username="doc", password="pass12345")
-    
+
     # Create a triage interaction
     TriageInteraction.objects.create(
         user=patient,
         symptoms_text="Headache and fever",
         severity="Critical",
-        result={"summary": "Possible severe condition requiring immediate attention"}
+        result={
+            "summary": "Possible severe condition requiring immediate "
+            "attention"
+        }
     )
-    
+
     r = client.get(reverse("triage:admin_dashboard"))
     assert r.status_code == 200
     content = r.content.decode()
@@ -59,14 +64,14 @@ def test_dashboard_lists_interactions(client):
 
 @pytest.mark.django_db
 def test_dashboard_orders_by_severity(client):
-    """Test that dashboard orders interactions by severity (Critical first)."""
-    staff = User.objects.create_user("doc", password="pass12345", is_staff=True)
+    """Test that dashboard orders interactions by severity."""
+    User.objects.create_user("doc", password="pass12345", is_staff=True)
     patient1 = User.objects.create_user("patient1", password="pass12345")
     patient2 = User.objects.create_user("patient2", password="pass12345")
     patient3 = User.objects.create_user("patient3", password="pass12345")
-    
+
     client.login(username="doc", password="pass12345")
-    
+
     # Create interactions with different severities
     TriageInteraction.objects.create(
         user=patient1,
@@ -86,16 +91,16 @@ def test_dashboard_orders_by_severity(client):
         severity="Moderate",
         result={"summary": "Moderate condition"}
     )
-    
+
     r = client.get(reverse("triage:admin_dashboard"))
     assert r.status_code == 200
     content = r.content.decode()
-    
+
     # Find positions of each severity in the rendered HTML
     critical_pos = content.find("Critical symptoms")
     moderate_pos = content.find("Moderate symptoms")
     mild_pos = content.find("Mild symptoms")
-    
+
     # Critical should appear first
     assert critical_pos != -1
     assert moderate_pos != -1
@@ -107,12 +112,12 @@ def test_dashboard_orders_by_severity(client):
 @pytest.mark.django_db
 def test_dashboard_filter_by_severity(client):
     """Test that severity filter works correctly."""
-    staff = User.objects.create_user("doc", password="pass12345", is_staff=True)
+    User.objects.create_user("doc", password="pass12345", is_staff=True)
     patient1 = User.objects.create_user("patient1", password="pass12345")
     patient2 = User.objects.create_user("patient2", password="pass12345")
-    
+
     client.login(username="doc", password="pass12345")
-    
+
     TriageInteraction.objects.create(
         user=patient1,
         symptoms_text="Critical symptoms",
@@ -125,14 +130,14 @@ def test_dashboard_filter_by_severity(client):
         severity="Mild",
         result={"summary": "Mild condition"}
     )
-    
+
     # Filter by Critical
     r = client.get(reverse("triage:admin_dashboard") + "?severity=Critical")
     assert r.status_code == 200
     content = r.content.decode()
     assert "Critical symptoms" in content
     assert "Mild symptoms" not in content
-    
+
     # Filter by Mild
     r = client.get(reverse("triage:admin_dashboard") + "?severity=Mild")
     assert r.status_code == 200
@@ -144,7 +149,7 @@ def test_dashboard_filter_by_severity(client):
 @pytest.mark.django_db
 def test_dashboard_shows_patient_info(client):
     """Test that dashboard displays patient name and email."""
-    staff = User.objects.create_user("doc", password="pass12345", is_staff=True)
+    User.objects.create_user("doc", password="pass12345", is_staff=True)
     patient = User.objects.create_user(
         "patient",
         password="pass12345",
@@ -153,14 +158,14 @@ def test_dashboard_shows_patient_info(client):
         last_name="Doe"
     )
     client.login(username="doc", password="pass12345")
-    
+
     TriageInteraction.objects.create(
         user=patient,
         symptoms_text="Test symptoms",
         severity="Moderate",
         result={"summary": "Test summary"}
     )
-    
+
     r = client.get(reverse("triage:admin_dashboard"))
     assert r.status_code == 200
     content = r.content.decode()
@@ -171,17 +176,17 @@ def test_dashboard_shows_patient_info(client):
 @pytest.mark.django_db
 def test_dashboard_view_link_works(client):
     """Test that View button links to correct detail page."""
-    staff = User.objects.create_user("doc", password="pass12345", is_staff=True)
+    User.objects.create_user("doc", password="pass12345", is_staff=True)
     patient = User.objects.create_user("patient", password="pass12345")
     client.login(username="doc", password="pass12345")
-    
+
     interaction = TriageInteraction.objects.create(
         user=patient,
         symptoms_text="Test symptoms",
         severity="Moderate",
         result={"summary": "Test summary"}
     )
-    
+
     r = client.get(reverse("triage:admin_dashboard"))
     assert r.status_code == 200
     content = r.content.decode()
@@ -193,17 +198,17 @@ def test_dashboard_view_link_works(client):
 @pytest.mark.django_db
 def test_staff_can_view_any_patient_detail(client):
     """Test that staff can view any patient's triage detail."""
-    staff = User.objects.create_user("doc", password="pass12345", is_staff=True)
+    User.objects.create_user("doc", password="pass12345", is_staff=True)
     patient = User.objects.create_user("patient", password="pass12345")
     client.login(username="doc", password="pass12345")
-    
+
     interaction = TriageInteraction.objects.create(
         user=patient,
         symptoms_text="Patient symptoms",
         severity="Severe",
         result={"summary": "Patient summary"}
     )
-    
+
     r = client.get(reverse("triage:detail", args=[interaction.id]))
     assert r.status_code == 200
     content = r.content.decode()

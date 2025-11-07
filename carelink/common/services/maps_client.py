@@ -5,4 +5,3 @@ class MapsClient:
 
     def search_nearby(self, query: str, lat: float, lng: float) -> list[dict]:
         raise NotImplementedError("Not implemented: placeholder only.")
-

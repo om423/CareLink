@@ -2,7 +2,6 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
-from django.contrib import messages
 from django.http import JsonResponse
 from django.db import models
 import json
@@ -15,6 +14,7 @@ try:
     from profiles.models import PatientProfile
 except Exception:
     PatientProfile = None
+
 
 def index(request):
     return render(request, "triage/index.html")
@@ -51,7 +51,7 @@ def detail(request, interaction_id):
     """View details of a specific triage interaction."""
     from django.shortcuts import get_object_or_404
 
-    # Allow staff/admin or doctors to view any patient's triage, otherwise restrict to own
+    # Allow staff/admin or doctors to view any patient's triage
     can_view_all = False
     if request.user.is_staff or request.user.is_superuser:
         can_view_all = True
@@ -64,11 +64,15 @@ def detail(request, interaction_id):
                     can_view_all = True
         except Exception:
             pass
-    
+
     if can_view_all:
-        interaction = get_object_or_404(TriageInteraction, id=interaction_id)
+        interaction = get_object_or_404(
+            TriageInteraction, id=interaction_id
+        )
     else:
-        interaction = get_object_or_404(TriageInteraction, id=interaction_id, user=request.user)
+        interaction = get_object_or_404(
+            TriageInteraction, id=interaction_id, user=request.user
+        )
     return render(request, "triage/detail.html", {"interaction": interaction})
 
 
@@ -128,9 +132,13 @@ def chat_api(request):
         all_symptoms.append(symptoms)
 
         # Combine all symptoms for comprehensive assessment
-        combined_symptoms = "\n\nAdditional information: ".join(all_symptoms)
+        combined_symptoms = (
+            "\n\nAdditional information: ".join(all_symptoms)
+        )
 
-        result = client.generate_triage(combined_symptoms, patient_context=patient_ctx)
+        result = client.generate_triage(
+            combined_symptoms, patient_context=patient_ctx
+        )
 
         # Persist or update interaction with full context based on session_id
         try:

@@ -8,5 +8,6 @@ from profiles.models import PatientProfile
 def create_patient_profile(sender, instance, created, **kwargs):
     """Automatically create PatientProfile when a new User is created."""
     if created:
-        PatientProfile.objects.get_or_create(user=instance, defaults={'role': 'patient'})
-
+        PatientProfile.objects.get_or_create(
+            user=instance, defaults={'role': 'patient'}
+        )

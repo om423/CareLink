@@ -1,10 +1,12 @@
 import pytest
 from django.urls import reverse
 
+
 @pytest.mark.django_db
 def test_home_ok(client):
     resp = client.get(reverse("home:index"))
     assert resp.status_code == 200
+
 
 @pytest.mark.parametrize("path", [
     "/accounts/",
@@ -17,5 +19,4 @@ def test_home_ok(client):
 ])
 def test_placeholders_ok(client, path):
     r = client.get(path)
-    assert r.status_code in (200, 302)  # 302 allowed if future auth redirects added
-
+    assert r.status_code in (200, 302)

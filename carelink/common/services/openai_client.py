@@ -5,4 +5,3 @@ class OpenAIClient:
 
     def analyze_symptoms(self, text: str) -> dict:
         raise NotImplementedError("Not implemented: placeholder only.")
-

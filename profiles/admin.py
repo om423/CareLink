@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.utils import timezone
 import csv
@@ -19,41 +19,58 @@ class PatientProfileInline(admin.StackedInline):
 class CustomUserAdmin(UserAdmin):
     """Custom User admin with PatientProfile inline."""
     inlines = (PatientProfileInline,)
-    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'is_active', 'get_user_role', 'date_joined')
-    list_filter = ('is_staff', 'is_superuser', 'is_active', 'date_joined', 'groups')
+    list_display = (
+        'username', 'email', 'first_name', 'last_name',
+        'is_staff', 'is_superuser', 'is_active',
+        'get_user_role', 'date_joined'
+    )
+    list_filter = (
+        'is_staff', 'is_superuser', 'is_active',
+        'date_joined', 'groups'
+    )
     search_fields = ('username', 'first_name', 'last_name', 'email')
     actions = ['export_users_csv']
-    
+
     def get_user_role(self, obj):
         try:
             return obj.patient_profile.get_role_display()
         except PatientProfile.DoesNotExist:
             return 'No Profile'
     get_user_role.short_description = 'Role'
-    
+
     @admin.action(description='Export selected users to CSV')
     def export_users_csv(self, request, queryset):
         """Export selected users to CSV file."""
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="users_export_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
-        
+        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+        response['Content-Disposition'] = (
+            f'attachment; filename="users_export_{timestamp}.csv"'
+        )
+
         writer = csv.writer(response)
         writer.writerow([
-            'Username', 'Email', 'First Name', 'Last Name', 'Role', 'Is Staff', 'Is Superuser',
-            'Is Active', 'Date Joined', 'Last Login', 'Age', 'Weight', 'Medical History', 'Allergies'
+            'Username', 'Email', 'First Name', 'Last Name', 'Role',
+            'Is Staff', 'Is Superuser', 'Is Active', 'Date Joined',
+            'Last Login', 'Age', 'Weight', 'Medical History', 'Allergies'
         ])
-        
+
         for user in queryset:
             try:
                 profile = user.patient_profile
                 role = profile.get_role_display()
                 age = profile.age if profile.age else 'N/A'
                 weight = profile.weight if profile.weight else 'N/A'
-                medical_history = profile.medical_history[:50] if profile.medical_history else 'N/A'
-                allergies = profile.allergies[:50] if profile.allergies else 'N/A'
+                med_history = (
+                    profile.medical_history[:50]
+                    if profile.medical_history else 'N/A'
+                )
+                allergies = (
+                    profile.allergies[:50]
+                    if profile.allergies else 'N/A'
+                )
             except PatientProfile.DoesNotExist:
-                role = age = weight = medical_history = allergies = 'No Profile'
-            
+                role = age = weight = med_history = allergies = 'No Profile'
+
             writer.writerow([
                 user.username,
                 user.email,
@@ -64,13 +81,16 @@ class CustomUserAdmin(UserAdmin):
                 user.is_superuser,
                 user.is_active,
                 user.date_joined.strftime('%Y-%m-%d %H:%M:%S'),
-                user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else 'Never',
+                (
+                    user.last_login.strftime('%Y-%m-%d %H:%M:%S')
+                    if user.last_login else 'Never'
+                ),
                 age,
                 weight,
-                medical_history,
+                med_history,
                 allergies
             ])
-        
+
         return response
 
 
@@ -99,13 +119,17 @@ class PatientProfileAdmin(admin.ModelAdmin):
     def export_profiles_csv(self, request, queryset):
         """Export selected profiles to CSV file."""
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="profiles_export_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
-        
+        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+        response['Content-Disposition'] = (
+            f'attachment; filename="profiles_export_{timestamp}.csv"'
+        )
+
         writer = csv.writer(response)
         writer.writerow([
-            'Username', 'User Email', 'Age', 'Weight', 'Medical History', 'Allergies', 'Created At', 'Updated At'
+            'Username', 'User Email', 'Age', 'Weight',
+            'Medical History', 'Allergies', 'Created At', 'Updated At'
         ])
-        
+
         for profile in queryset:
             writer.writerow([
                 profile.user.username,
@@ -117,7 +141,7 @@ class PatientProfileAdmin(admin.ModelAdmin):
                 profile.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 profile.updated_at.strftime('%Y-%m-%d %H:%M:%S')
             ])
-        
+
         return response
 
 

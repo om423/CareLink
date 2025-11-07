@@ -1,5 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.db.models import Max
+from profiles.models import PatientProfile
+
 
 def index(request):
     """Home page - shows dashboard for logged-in users, landing page for others."""
@@ -7,15 +9,18 @@ def index(request):
         # Show marketing landing page for logged-out users
         return render(request, "home/landing.html")
 
-    # Fetch user data for dashboard
-    from triage.models import TriageInteraction
-    from profiles.models import PatientProfile
-
-    # Get user profile
+    # Redirect doctors to their dashboard and get profile for patients
     try:
         profile = PatientProfile.objects.get(user=request.user)
+        if profile.role == 'doctor':
+            return redirect('doctors:index')
     except PatientProfile.DoesNotExist:
         profile = None
+
+    # Fetch user data for patient dashboard
+    from triage.models import TriageInteraction
+
+    # Profile already fetched above (or None if doesn't exist)
 
     # Get unique triage sessions (latest interaction per session)
     latest_interactions_ids = (

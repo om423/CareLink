@@ -6,7 +6,7 @@ from profiles.models import PatientProfile
 
 class UserRegistrationForm(UserCreationForm):
     """Form for user registration with role selection."""
-    
+
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={
         'class': 'form-control',
         'placeholder': 'Enter your email'
@@ -27,22 +27,31 @@ class UserRegistrationForm(UserCreationForm):
         }),
         help_text="Select your role"
     )
-    
+
     class Meta:
         model = User
-        fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2', 'role')
+        fields = (
+            'username', 'first_name', 'last_name', 'email',
+            'password1', 'password2', 'role'
+        )
         widgets = {
             'username': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Choose a username'
             }),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Enter password'})
-        self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirm password'})
-    
+        self.fields['password1'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Enter password'
+        })
+        self.fields['password2'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Confirm password'
+        })
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
@@ -63,7 +72,7 @@ class UserRegistrationForm(UserCreationForm):
 
 class ProfileForm(forms.ModelForm):
     """Form for editing patient profile."""
-    
+
     class Meta:
         model = PatientProfile
         fields = ('age', 'weight', 'medical_history', 'allergies')
@@ -85,7 +94,9 @@ class ProfileForm(forms.ModelForm):
             'allergies': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 4,
-                'placeholder': 'Known allergies (medications, foods, environmental)'
+                'placeholder': (
+                    'Known allergies (medications, foods, environmental)'
+                )
             }),
         }
 

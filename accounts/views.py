@@ -3,15 +3,21 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
-from django.core.exceptions import PermissionDenied
 from accounts.forms import UserRegistrationForm
 from profiles.models import PatientProfile
 
 
 def index(request):
-    """Redirect to login page."""
+    """Redirect based on user role."""
     if request.user.is_authenticated:
-        return redirect('profiles:edit')
+        try:
+            role = request.user.patient_profile.role
+            if role == 'doctor':
+                return redirect('doctors:index')
+            else:
+                return redirect('profiles:edit')
+        except PatientProfile.DoesNotExist:
+            return redirect('profiles:edit')
     return redirect('accounts:login')
 
 
@@ -19,16 +25,20 @@ def register_view(request):
     """User registration view."""
     if request.user.is_authenticated:
         return redirect('home:index')
-    
+
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            messages.success(request, f'Account created successfully for {user.username}! Please log in.')
+            messages.success(
+                request,
+                f'Account created successfully for {user.username}! '
+                'Please log in.'
+            )
             return redirect('accounts:login')
     else:
         form = UserRegistrationForm()
-    
+
     return render(request, 'accounts/register.html', {'form': form})
 
 
@@ -43,16 +53,30 @@ def login_view(request):
             user = form.get_user()
             login(request, user)
 
-            # Check if user needs to complete onboarding
+            # Check if user needs to complete onboarding (patients only)
             try:
                 profile = user.patient_profile
+                # Skip onboarding for doctors
+                if profile.role == 'doctor':
+                    messages.success(request, f'Welcome back, {user.username}!')
+                    return redirect('doctors:index')
+
+                # Patients need to complete onboarding
                 if not profile.onboarding_completed:
-                    messages.info(request, f'Welcome, {user.username}! Please complete your profile to get started.')
+                    messages.info(
+                        request,
+                        f'Welcome, {user.username}! '
+                        'Please complete your profile to get started.'
+                    )
                     return redirect('profiles:onboarding')
             except PatientProfile.DoesNotExist:
-                # Create profile and redirect to onboarding
-                PatientProfile.objects.create(user=user)
-                messages.info(request, f'Welcome, {user.username}! Please complete your profile to get started.')
+                # Create profile with default role (patient)
+                PatientProfile.objects.create(user=user, role='patient')
+                messages.info(
+                    request,
+                    f'Welcome, {user.username}! '
+                    'Please complete your profile to get started.'
+                )
                 return redirect('profiles:onboarding')
 
             messages.success(request, f'Welcome back, {user.username}!')

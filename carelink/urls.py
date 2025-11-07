@@ -4,8 +4,10 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.conf.urls.static import static
 
+
 def health(request):
     return JsonResponse({"status": "ok"})
+
 
 def readiness(request):
     return JsonResponse({"ready": True})

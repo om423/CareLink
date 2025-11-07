@@ -1,20 +1,20 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from accounts.views import patient_required
 from profiles.forms import ProfileForm
 from profiles.models import PatientProfile
 
 
+@patient_required
 def index(request):
-    """Redirect to profile edit page."""
-    if request.user.is_authenticated:
-        return redirect('profiles:edit')
-    return redirect('accounts:login')
+    """Redirect to profile edit page. Patients only."""
+    return redirect('profiles:edit')
 
 
-@login_required
+@patient_required
 def onboarding(request):
-    """Onboarding flow for new users to complete their profile."""
+    """Onboarding flow for new users to complete their profile. Patients only."""
     profile, created = PatientProfile.objects.get_or_create(user=request.user)
 
     # If already completed onboarding, redirect to home
@@ -27,7 +27,10 @@ def onboarding(request):
             profile = form.save(commit=False)
             profile.onboarding_completed = True
             profile.save()
-            messages.success(request, 'Welcome to CareLink! Your profile has been set up successfully.')
+            messages.success(
+                request,
+                'Welcome to CareLink! Your profile has been set up successfully.'
+            )
             return redirect('home:index')
     else:
         form = ProfileForm(instance=profile)
@@ -38,9 +41,9 @@ def onboarding(request):
     })
 
 
-@login_required
+@patient_required
 def edit_profile(request):
-    """Edit patient profile view."""
+    """Edit patient profile view. Patients only."""
     profile, created = PatientProfile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':

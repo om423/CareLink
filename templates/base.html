@@ -29,6 +29,8 @@
             <h1 class="m-0" style="font-size: 1.25rem; font-weight: var(--cl-font-semibold); color: var(--cl-blue);">CareLink</h1>
             {% if not user.is_authenticated %}
               <p class="m-0" style="font-size: 0.75rem; color: var(--cl-text-muted);">AI-Enhanced Telehealth Triage</p>
+            {% elif user.is_authenticated and user.patient_profile.role == 'doctor' %}
+              <p class="m-0" style="font-size: 0.75rem; color: var(--cl-text-muted);">Doctor Portal</p>
             {% endif %}
           </div>
         </a>
@@ -80,9 +82,12 @@
                 </li>
                 {% endif %}
                 <li class="nav-item">
-                  <a class="nav-link" href="{% url 'profiles:edit' %}">
-                    <i class="fas fa-user-md me-1"></i>My Profile
-                  </a>
+                  <button class="nav-link position-relative" style="background: transparent; border: none; color: var(--cl-text-muted); padding: 0.5rem 1rem; cursor: pointer;">
+                    <i class="fas fa-bell me-1"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="font-size: 0.5rem;">
+                      <span class="visually-hidden">New alerts</span>
+                    </span>
+                  </button>
                 </li>
               {% else %}
                 {% if user.is_staff or user.is_superuser %}

@@ -4,7 +4,7 @@ from profiles.models import PatientProfile
 
 class ProfileForm(forms.ModelForm):
     """Form for editing patient profile."""
-    
+
     class Meta:
         model = PatientProfile
         fields = ('age', 'weight', 'medical_history', 'allergies')
@@ -26,7 +26,9 @@ class ProfileForm(forms.ModelForm):
             'allergies': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 4,
-                'placeholder': 'Known allergies (medications, foods, environmental)'
+                'placeholder': (
+                    'Known allergies (medications, foods, environmental)'
+                )
             }),
         }
 
