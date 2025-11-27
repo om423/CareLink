@@ -7,6 +7,14 @@
   let selectedTime = null;
 
   document.addEventListener('DOMContentLoaded', function() {
+    // Get the time slots section and remove it from its current position
+    const timeSlotsSection = document.getElementById('time-slots-section');
+    let timeSlotsParent = null;
+    if (timeSlotsSection) {
+      timeSlotsParent = timeSlotsSection.parentNode;
+      timeSlotsSection.style.display = 'none';
+    }
+    
     // Handle doctor selection
     document.querySelectorAll('.book-doctor-btn').forEach(btn => {
       btn.addEventListener('click', function(e) {
@@ -25,8 +33,34 @@
         this.classList.add('btn-success');
         this.textContent = '✓ Selected';
         
-        // Update booking summary
+        // Move time slots section to appear right after this doctor's card
+        if (timeSlotsSection) {
+          // Find the doctor card that was clicked
+          const doctorCard = this.closest('.doctor-card');
+          if (doctorCard) {
+            // Remove from current position if it exists elsewhere
+            if (timeSlotsSection.parentNode) {
+              timeSlotsSection.parentNode.removeChild(timeSlotsSection);
+            }
+            // Find the next doctor card or the end of the container
+            const container = doctorCard.parentNode;
+            let nextCard = doctorCard.nextElementSibling;
+            // Skip if next element is already the time slots section
+            while (nextCard && nextCard.id === 'time-slots-section') {
+              nextCard = nextCard.nextElementSibling;
+            }
+            // Insert right after the selected doctor's card
+            if (nextCard) {
+              container.insertBefore(timeSlotsSection, nextCard);
+            } else {
+              container.appendChild(timeSlotsSection);
+            }
+          }
+        }
+        
+        // Update booking summary and check if time slots should be shown
         updateBookingSummary();
+        checkTimeSlotsVisibility();
       });
     });
 
@@ -54,6 +88,7 @@
       dateInput.addEventListener('change', function() {
         selectedDate = this.value;
         updateBookingSummary();
+        checkTimeSlotsVisibility();
       });
       // Set min date to today
       const today = new Date().toISOString().split('T')[0];
@@ -61,8 +96,32 @@
       if (!dateInput.value) {
         dateInput.value = today;
         selectedDate = today;
+        // Check visibility after setting default date
+        setTimeout(checkTimeSlotsVisibility, 100);
       }
     }
+    
+    // Function to check if time slots should be visible
+    function checkTimeSlotsVisibility() {
+      const timeSlotsSection = document.getElementById('time-slots-section');
+      if (timeSlotsSection) {
+        if (selectedDoctor && selectedDate) {
+          timeSlotsSection.style.display = 'block';
+          // Add a fade-in animation
+          timeSlotsSection.style.opacity = '0';
+          setTimeout(() => {
+            timeSlotsSection.style.transition = 'opacity 0.3s ease-in';
+            timeSlotsSection.style.opacity = '1';
+          }, 10);
+        } else {
+          timeSlotsSection.style.display = 'none';
+          timeSlotsSection.style.opacity = '0';
+        }
+      }
+    }
+    
+    // Make function available globally for other event handlers
+    window.checkTimeSlotsVisibility = checkTimeSlotsVisibility;
 
     // Handle confirm appointment
     const confirmBtn = document.getElementById('confirm-appointment-btn');
@@ -181,9 +240,42 @@
                                       color: var(--cl-text-muted)">Find and schedule with healthcare professionals</p>
                         </div>
                     </div>
-                    <a href="{% url 'appointments:index' %}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-list me-2"></i>My Appointments
-                    </a>
+                    <div class="d-flex gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary btn-sm dropdown-toggle" 
+                                    type="button" 
+                                    id="specialtyFilterDropdown" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false">
+                                <i class="fas fa-filter me-2"></i>
+                                {% if selected_specialty %}
+                                    {{ selected_specialty }}
+                                {% else %}
+                                    Filter by Specialty
+                                {% endif %}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="specialtyFilterDropdown">
+                                <li>
+                                    <a class="dropdown-item {% if not selected_specialty %}active{% endif %}" 
+                                       href="{% url 'appointments:book' %}">
+                                        <i class="fas fa-list me-2"></i>All Specialties
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% for specialty in specialties %}
+                                <li>
+                                    <a class="dropdown-item {% if selected_specialty == specialty %}active{% endif %}" 
+                                       href="{% url 'appointments:book' %}?specialty={{ specialty|urlencode }}">
+                                        <i class="fas fa-stethoscope me-2"></i>{{ specialty }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <a href="{% url 'appointments:index' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-list me-2"></i>My Appointments
+                        </a>
+                    </div>
                 </div>
             </div>
         </header>
@@ -191,13 +283,28 @@
             <div class="row g-4">
                 <!-- Doctors List -->
                 <div class="col-lg-8">
-                    <h3 class="mb-4" style="font-size: var(--cl-h3); color: var(--cl-text);">Available Doctors</h3>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">
+                            Available Doctors
+                            {% if selected_specialty %}
+                                <span class="badge bg-primary ms-2">
+                                    <i class="fas fa-filter me-1"></i>{{ selected_specialty }}
+                                    <a href="{% url 'appointments:book' %}" class="text-white ms-2" style="text-decoration: none;" title="Clear filter">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </span>
+                            {% endif %}
+                        </h3>
+                        {% if doctors_with_specialty %}
+                        <small class="text-muted">{{ doctors_with_specialty|length }} doctor{{ doctors_with_specialty|length|pluralize }} available</small>
+                        {% endif %}
+                    </div>
                     <div class="d-flex flex-column gap-3 mb-4">
                         {% if doctors_with_specialty %}
                             {% for item in doctors_with_specialty %}
                             {% with doctor=item.doctor specialty=item.specialty %}
                             <!-- Doctor Card -->
-                            <div class="card" style="border: 1px solid var(--cl-border);">
+                            <div class="card doctor-card" data-doctor-card-id="{{ doctor.id }}" style="border: 1px solid var(--cl-border);">
                                 <div class="card-body">
                                     <div class="d-flex gap-3">
                                         <div class="d-flex align-items-center justify-content-center"
@@ -245,14 +352,22 @@
                             {% endfor %}
                         {% else %}
                         <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>No doctors available at this time.
+                            <i class="fas fa-info-circle me-2"></i>
+                            {% if selected_specialty %}
+                                No {{ selected_specialty }} doctors available at this time.
+                                <a href="{% url 'appointments:book' %}" class="alert-link">View all doctors</a>
+                            {% else %}
+                                No doctors available at this time.
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>
-                    <!-- Time Slots -->
-                    <div class="card" style="border: 1px solid var(--cl-border);">
+                    <!-- Time Slots - Will be dynamically inserted after selected doctor's card -->
+                    <div class="card mt-3" id="time-slots-section" style="border: 1px solid var(--cl-border); display: none; opacity: 0; transition: opacity 0.3s ease-in;">
                         <div class="card-header bg-transparent border-bottom">
-                            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">Available Time Slots</h5>
+                            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                <i class="fas fa-clock me-2" style="color: var(--cl-teal);"></i>Available Time Slots
+                            </h5>
                             <small class="text-muted">Select a convenient time for your appointment</small>
                         </div>
                         <div class="card-body">

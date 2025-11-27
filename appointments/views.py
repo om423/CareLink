@@ -106,8 +106,10 @@ def book(request):
 
     doctors = User.objects.filter(patient_profile__role="doctor").order_by("username")
     
-    # Extract specialty for each doctor
+    # Extract specialty for each doctor and get all unique specialties
     doctors_with_specialty = []
+    specialties_set = set()
+    
     for doctor in doctors:
         specialty = "General Practice"
         if doctor.last_name and "(" in doctor.last_name:
@@ -119,16 +121,37 @@ def book(request):
                     specialty = doctor.last_name[start:end]
             except:
                 pass
+        specialties_set.add(specialty)
         doctors_with_specialty.append({
             "doctor": doctor,
             "specialty": specialty,
         })
+    
+    # Get filter from query parameter
+    selected_specialty = request.GET.get("specialty", "")
+    
+    # Filter doctors by specialty if filter is selected
+    if selected_specialty:
+        doctors_with_specialty = [
+            item for item in doctors_with_specialty 
+            if item["specialty"] == selected_specialty
+        ]
+
+    # Sort specialties alphabetically, but put "General Practice" first
+    specialties_list = sorted(list(specialties_set))
+    if "General Practice" in specialties_list:
+        specialties_list.remove("General Practice")
+        specialties = ["General Practice"] + sorted(specialties_list)
+    else:
+        specialties = specialties_list
 
     # Use the booking template (templates/appointments/index.html for the fancy UI)
     # This template is in the global templates directory and shows doctor cards
     context = {
         "doctors": doctors,
         "doctors_with_specialty": doctors_with_specialty,
+        "specialties": specialties,
+        "selected_specialty": selected_specialty,
     }
     return render(request, "appointments/index.html", context)
 
