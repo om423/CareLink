@@ -39,19 +39,41 @@
             </div>
           </div>
 
-          <div class="mb-3">
-            <strong><i class="fas fa-info-circle me-2"></i>Status:</strong>
-            <p class="mb-0">
-              {% if appointment.status == "pending" %}
-                <span class="badge bg-warning">Pending</span>
-              {% elif appointment.status == "confirmed" %}
-                <span class="badge bg-success">Confirmed</span>
-              {% elif appointment.status == "completed" %}
-                <span class="badge bg-info">Completed</span>
-              {% elif appointment.status == "cancelled" %}
-                <span class="badge bg-danger">Cancelled</span>
-              {% endif %}
-            </p>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong>
+                {% if appointment.appointment_type == "virtual" %}
+                  <i class="fas fa-video me-2"></i>Type:
+                {% else %}
+                  <i class="fas fa-hospital me-2"></i>Type:
+                {% endif %}
+              </strong>
+              <p class="mb-0">
+                {% if appointment.appointment_type == "virtual" %}
+                  <span class="badge bg-info">
+                    <i class="fas fa-video me-1"></i>Virtual Visit
+                  </span>
+                {% else %}
+                  <span class="badge bg-primary">
+                    <i class="fas fa-hospital me-1"></i>In Person
+                  </span>
+                {% endif %}
+              </p>
+            </div>
+            <div class="col-md-6">
+              <strong><i class="fas fa-info-circle me-2"></i>Status:</strong>
+              <p class="mb-0">
+                {% if appointment.status == "pending" %}
+                  <span class="badge bg-warning">Pending</span>
+                {% elif appointment.status == "confirmed" %}
+                  <span class="badge bg-success">Confirmed</span>
+                {% elif appointment.status == "completed" %}
+                  <span class="badge bg-info">Completed</span>
+                {% elif appointment.status == "cancelled" %}
+                  <span class="badge bg-danger">Cancelled</span>
+                {% endif %}
+              </p>
+            </div>
           </div>
 
           {% if appointment.reason %}

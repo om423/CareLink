@@ -32,6 +32,7 @@ def book(request):
         doctor_id = request.POST.get("doctor")
         appointment_date = request.POST.get("appointment_date")
         appointment_time = request.POST.get("appointment_time")
+        appointment_type = request.POST.get("appointment_type", "in_person")
         reason = request.POST.get("reason", "")
         
         if doctor_id and appointment_date and appointment_time:
@@ -67,6 +68,7 @@ def book(request):
                     doctor=doctor,
                     appointment_date=appointment_date,
                     appointment_time=appointment_time,
+                    appointment_type=appointment_type,
                     reason=reason,
                     status="pending",
                 )
@@ -90,6 +92,7 @@ def book(request):
                     doctor=form.cleaned_data["doctor"],
                     appointment_date=form.cleaned_data["appointment_date"],
                     appointment_time=form.cleaned_data["appointment_time"],
+                    appointment_type=form.cleaned_data.get("appointment_type", "in_person"),
                     reason=form.cleaned_data.get("reason", ""),
                     status="pending",
                 )

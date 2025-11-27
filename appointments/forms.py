@@ -29,6 +29,15 @@ class AppointmentBookingForm(forms.Form):
         ),
         help_text="Select appointment time",
     )
+    appointment_type = forms.ChoiceField(
+        choices=[
+            ("in_person", "In Person"),
+            ("virtual", "Virtual Visit"),
+        ],
+        widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
+        initial="in_person",
+        help_text="Select appointment type",
+    )
     reason = forms.CharField(
         widget=forms.Textarea(
             attrs={

@@ -13,6 +13,11 @@ class Appointment(models.Model):
         ("cancelled", "Cancelled"),
     ]
 
+    APPOINTMENT_TYPE_CHOICES = [
+        ("in_person", "In Person"),
+        ("virtual", "Virtual Visit"),
+    ]
+
     patient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -27,6 +32,12 @@ class Appointment(models.Model):
     )
     appointment_date = models.DateField(help_text="Date of the appointment")
     appointment_time = models.TimeField(help_text="Time of the appointment")
+    appointment_type = models.CharField(
+        max_length=20,
+        choices=APPOINTMENT_TYPE_CHOICES,
+        default="in_person",
+        help_text="Type of appointment: in-person or virtual",
+    )
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

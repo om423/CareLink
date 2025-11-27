@@ -11,10 +11,11 @@ class AppointmentAdmin(admin.ModelAdmin):
         "doctor",
         "appointment_date",
         "appointment_time",
+        "appointment_type",
         "status",
         "created_at",
     ]
-    list_filter = ["status", "appointment_date", "created_at"]
+    list_filter = ["status", "appointment_type", "appointment_date", "created_at"]
     search_fields = [
         "patient__username",
         "doctor__username",

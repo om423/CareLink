@@ -5,6 +5,7 @@
   let selectedDoctor = null;
   let selectedDate = null;
   let selectedTime = null;
+  let selectedAppointmentType = 'in_person';
 
   document.addEventListener('DOMContentLoaded', function() {
     // Get the time slots section and remove it from its current position
@@ -142,6 +143,7 @@
       const doctorNameEl = document.getElementById('summary-doctor');
       const dateEl = document.getElementById('summary-date');
       const timeEl = document.getElementById('summary-time');
+      const typeEl = document.getElementById('summary-type');
       
       if (selectedDoctor && doctorNameEl) {
         const doctorBtn = document.querySelector(`[data-doctor-id="${selectedDoctor}"]`);
@@ -154,6 +156,31 @@
       if (selectedTime && timeEl) {
         timeEl.textContent = selectedTime;
       }
+      if (typeEl) {
+        const selectedRadio = document.querySelector('input[name="appointment_type"]:checked');
+        if (selectedRadio) {
+          selectedAppointmentType = selectedRadio.value;
+          typeEl.textContent = selectedAppointmentType === 'virtual' ? 'Virtual Visit' : 'In Person';
+        } else {
+          typeEl.textContent = 'In Person';
+        }
+      }
+    }
+    
+    // Initialize appointment type from radio buttons
+    const appointmentTypeRadios = document.querySelectorAll('input[name="appointment_type"]');
+    if (appointmentTypeRadios.length > 0) {
+      const checkedRadio = document.querySelector('input[name="appointment_type"]:checked');
+      if (checkedRadio) {
+        selectedAppointmentType = checkedRadio.value;
+      }
+      // Add event listeners
+      appointmentTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+          selectedAppointmentType = this.value;
+          updateBookingSummary();
+        });
+      });
     }
 
     function submitBooking() {
@@ -200,9 +227,17 @@
       timeInput.value = selectedTime;
       form.appendChild(timeInput);
       
+      // Add appointment type
+      const appointmentTypeInput = document.createElement('input');
+      appointmentTypeInput.type = 'hidden';
+      appointmentTypeInput.name = 'appointment_type';
+      appointmentTypeInput.value = selectedAppointmentType;
+      form.appendChild(appointmentTypeInput);
+      
       document.body.appendChild(form);
       form.submit();
     }
+    
 
     function getCookie(name) {
       let cookieValue = null;
@@ -433,6 +468,40 @@
                                        required>
                             </div>
                         </div>
+                        <!-- Appointment Type -->
+                        <div class="card" style="border: 1px solid var(--cl-border);">
+                            <div class="card-header bg-transparent border-bottom">
+                                <h5 class="mb-0 d-flex align-items-center gap-2"
+                                    style="font-size: var(--cl-h4);
+                                           color: var(--cl-text)">
+                                    <i class="fas fa-video" style="color: var(--cl-blue);"></i>
+                                    Appointment Type
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" 
+                                           type="radio" 
+                                           name="appointment_type" 
+                                           id="appointment-type-in-person" 
+                                           value="in_person" 
+                                           checked>
+                                    <label class="form-check-label" for="appointment-type-in-person">
+                                        <i class="fas fa-hospital me-2"></i>In Person
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="radio" 
+                                           name="appointment_type" 
+                                           id="appointment-type-virtual" 
+                                           value="virtual">
+                                    <label class="form-check-label" for="appointment-type-virtual">
+                                        <i class="fas fa-video me-2"></i>Virtual Visit
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Booking Summary -->
                         <div class="card"
                              style="border: 1px solid var(--cl-border);
@@ -453,6 +522,10 @@
                                     <div class="d-flex justify-content-between p-2 bg-white rounded">
                                         <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Time</span>
                                         <span style="font-size: var(--cl-sm); color: var(--cl-text);" id="summary-time">Not selected</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between p-2 bg-white rounded">
+                                        <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Type</span>
+                                        <span style="font-size: var(--cl-sm); color: var(--cl-text);" id="summary-type">In Person</span>
                                     </div>
                                     <div class="d-flex justify-content-between p-2 bg-white rounded">
                                         <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Duration</span>
