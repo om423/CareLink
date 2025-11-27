@@ -76,3 +76,9 @@ class Appointment(models.Model):
     def can_be_cancelled(self):
         """Check if appointment can be cancelled."""
         return self.status in ["pending", "confirmed"] and not self.is_past()
+
+    def can_be_edited(self):
+        """Check if appointment can be edited."""
+        # Allow editing of pending or confirmed appointments
+        # (validation for past appointments will be handled in the form)
+        return self.status in ["pending", "confirmed"]

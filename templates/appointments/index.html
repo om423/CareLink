@@ -6,8 +6,53 @@
   let selectedDate = null;
   let selectedTime = null;
   let selectedAppointmentType = 'in_person';
+  let editAppointmentId = null;
+  
+  {% if edit_appointment %}
+  // Pre-populate form with existing appointment data
+  editAppointmentId = {{ edit_appointment.id }};
+  selectedDoctor = '{{ edit_appointment.doctor.id }}';
+  selectedDate = '{{ edit_appointment.appointment_date|date:"Y-m-d" }}';
+  selectedTime = '{{ edit_appointment.appointment_time|time:"g:i A" }}';
+  selectedAppointmentType = '{{ edit_appointment.appointment_type }}';
+  {% endif %}
 
   document.addEventListener('DOMContentLoaded', function() {
+    {% if edit_appointment %}
+    // Pre-populate form fields after DOM is loaded
+    // Set the date input
+    const dateInput = document.getElementById('appointment-date');
+    if (dateInput) {
+      dateInput.value = selectedDate;
+    }
+    
+    // Set appointment type radio
+    const typeRadio = document.querySelector(`input[name="appointment_type"][value="${selectedAppointmentType}"]`);
+    if (typeRadio) {
+      typeRadio.checked = true;
+      selectedAppointmentType = typeRadio.value;
+    }
+    
+    // Update booking summary
+    updateBookingSummary();
+    
+    // Highlight the selected doctor button
+    setTimeout(() => {
+      const doctorBtn = document.querySelector(`[data-doctor-id="${selectedDoctor}"]`);
+      if (doctorBtn) {
+        doctorBtn.click();
+      }
+      
+      // Highlight the selected time slot
+      const timeBtn = document.querySelector(`[data-time="${selectedTime}"]`);
+      if (timeBtn) {
+        timeBtn.click();
+      }
+      
+      // Show time slots if doctor and date are selected
+      checkTimeSlotsVisibility();
+    }, 200);
+    {% endif %}
     // Get the time slots section and remove it from its current position
     const timeSlotsSection = document.getElementById('time-slots-section');
     let timeSlotsParent = null;
@@ -234,6 +279,23 @@
       appointmentTypeInput.value = selectedAppointmentType;
       form.appendChild(appointmentTypeInput);
       
+      // Add reason
+      const reasonInput = document.createElement('input');
+      reasonInput.type = 'hidden';
+      reasonInput.name = 'reason';
+      const reasonTextarea = document.getElementById('appointment-reason');
+      reasonInput.value = reasonTextarea ? reasonTextarea.value : '';
+      form.appendChild(reasonInput);
+      
+      // Add edit appointment ID if editing
+      if (editAppointmentId) {
+        const editIdInput = document.createElement('input');
+        editIdInput.type = 'hidden';
+        editIdInput.name = 'edit_appointment_id';
+        editIdInput.value = editAppointmentId;
+        form.appendChild(editIdInput);
+      }
+      
       document.body.appendChild(form);
       form.submit();
     }
@@ -269,10 +331,14 @@
                             <i class="fas fa-arrow-left"></i>
                         </a>
                         <div>
-                            <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">Book Appointment</h2>
+                            <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">
+                                {% if edit_appointment %}Edit Appointment{% else %}Book Appointment{% endif %}
+                            </h2>
                             <p class="mb-0"
                                style="font-size: var(--cl-sm);
-                                      color: var(--cl-text-muted)">Find and schedule with healthcare professionals</p>
+                                      color: var(--cl-text-muted)">
+                                {% if edit_appointment %}Update your appointment details{% else %}Find and schedule with healthcare professionals{% endif %}
+                            </p>
                         </div>
                     </div>
                     <div class="d-flex gap-2">
@@ -502,6 +568,26 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Reason for Appointment -->
+                        <div class="card" style="border: 1px solid var(--cl-border);">
+                            <div class="card-header bg-transparent border-bottom">
+                                <h5 class="mb-0 d-flex align-items-center gap-2"
+                                    style="font-size: var(--cl-h4);
+                                           color: var(--cl-text)">
+                                    <i class="fas fa-stethoscope" style="color: var(--cl-blue);"></i>
+                                    Reason for Appointment (Optional)
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <textarea 
+                                    class="form-control" 
+                                    id="appointment-reason"
+                                    name="reason"
+                                    rows="4"
+                                    placeholder="Describe your symptoms or reason for the appointment...">{% if edit_appointment %}{{ edit_appointment.reason }}{% endif %}</textarea>
+                                <small class="form-text text-muted mt-2">Reason for appointment (optional)</small>
+                            </div>
+                        </div>
                         <!-- Booking Summary -->
                         <div class="card"
                              style="border: 1px solid var(--cl-border);
@@ -532,7 +618,7 @@
                                         <span style="font-size: var(--cl-sm); color: var(--cl-text);">30 minutes</span>
                                     </div>
                                     <button class="btn btn-success w-100 mt-3" id="confirm-appointment-btn">
-                                        <i class="fas fa-check me-2"></i>Confirm Appointment
+                                        <i class="fas fa-check me-2"></i>{% if edit_appointment %}Update Appointment{% else %}Confirm Appointment{% endif %}
                                     </button>
                                 </div>
                             </div>
@@ -543,4 +629,7 @@
         </div>
     </div>
     {% csrf_token %}
+    {% if edit_appointment %}
+    <input type="hidden" id="edit-appointment-id" name="edit_appointment_id" value="{{ edit_appointment.id }}">
+    {% endif %}
 {% endblock %}

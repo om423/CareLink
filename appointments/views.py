@@ -1,12 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from accounts.views import doctor_required, get_user_role, patient_required
 
-from .forms import AppointmentBookingForm, AppointmentUpdateForm
+from .forms import AppointmentBookingForm, AppointmentEditForm, AppointmentUpdateForm
 from .models import Appointment
 
 
@@ -16,9 +17,14 @@ def index(request):
     appointments = Appointment.objects.filter(patient=request.user).order_by(
         "-appointment_date", "-appointment_time"
     )
+    # Annotate with can_be_edited for template
+    upcoming_appointments = list(appointments.filter(status__in=["pending", "confirmed"]))
+    for appointment in upcoming_appointments:
+        appointment.can_be_edited = appointment.can_be_edited()
+    
     context = {
         "appointments": appointments,
-        "upcoming": appointments.filter(status__in=["pending", "confirmed"]),
+        "upcoming": upcoming_appointments,
         "past": appointments.filter(status__in=["completed", "cancelled"]),
     }
     return render(request, "appointments/my_appointments.html", context)
@@ -26,7 +32,19 @@ def index(request):
 
 @patient_required
 def book(request):
-    """Book a new appointment."""
+    """Book a new appointment or edit an existing one."""
+    # Check if we're editing an existing appointment (for both GET and POST)
+    edit_appointment_id = request.GET.get("edit") or request.POST.get("edit_appointment_id")
+    edit_appointment = None
+    if edit_appointment_id:
+        try:
+            edit_appointment = get_object_or_404(Appointment, id=edit_appointment_id, patient=request.user)
+            if edit_appointment.status not in ["pending", "confirmed"]:
+                messages.error(request, "This appointment cannot be edited.")
+                edit_appointment = None
+        except:
+            edit_appointment = None
+    
     if request.method == "POST":
         # Handle both form-based and AJAX-based submissions
         doctor_id = request.POST.get("doctor")
@@ -63,21 +81,37 @@ def book(request):
                         messages.error(request, f"Invalid time format: {appointment_time}")
                         return redirect("appointments:book")
                 
-                appointment = Appointment.objects.create(
-                    patient=request.user,
-                    doctor=doctor,
-                    appointment_date=appointment_date,
-                    appointment_time=appointment_time,
-                    appointment_type=appointment_type,
-                    reason=reason,
-                    status="pending",
-                )
-                messages.success(
-                    request,
-                    f"Appointment booked successfully! "
-                    f"Your appointment with {appointment.doctor.get_full_name() or appointment.doctor.username} is scheduled for "
-                    f"{appointment.appointment_date} at {appointment.appointment_time}.",
-                )
+                # Update existing appointment or create new one
+                if edit_appointment:
+                    edit_appointment.doctor = doctor
+                    edit_appointment.appointment_date = appointment_date
+                    edit_appointment.appointment_time = appointment_time
+                    edit_appointment.appointment_type = appointment_type
+                    edit_appointment.reason = reason
+                    edit_appointment.save()
+                    appointment = edit_appointment
+                    messages.success(
+                        request,
+                        f"Appointment updated successfully! "
+                        f"Your appointment with {appointment.doctor.get_full_name() or appointment.doctor.username} is now scheduled for "
+                        f"{appointment.appointment_date} at {appointment.appointment_time}.",
+                    )
+                else:
+                    appointment = Appointment.objects.create(
+                        patient=request.user,
+                        doctor=doctor,
+                        appointment_date=appointment_date,
+                        appointment_time=appointment_time,
+                        appointment_type=appointment_type,
+                        reason=reason,
+                        status="pending",
+                    )
+                    messages.success(
+                        request,
+                        f"Appointment booked successfully! "
+                        f"Your appointment with {appointment.doctor.get_full_name() or appointment.doctor.username} is scheduled for "
+                        f"{appointment.appointment_date} at {appointment.appointment_time}.",
+                    )
                 return redirect("appointments:detail", appointment_id=appointment.id)
             except User.DoesNotExist:
                 messages.error(request, "Selected doctor not found.")
@@ -155,6 +189,7 @@ def book(request):
         "doctors_with_specialty": doctors_with_specialty,
         "specialties": specialties,
         "selected_specialty": selected_specialty,
+        "edit_appointment": edit_appointment,
     }
     return render(request, "appointments/index.html", context)
 
@@ -190,8 +225,27 @@ def detail(request, appointment_id):
         "update_form": update_form,
         "is_doctor": role == "doctor",
         "can_cancel": appointment.can_be_cancelled(),
+        "can_edit": role == "patient" and appointment.can_be_edited(),
     }
     return render(request, "appointments/detail.html", context)
+
+
+@patient_required
+def edit(request, appointment_id):
+    """Edit an existing appointment - redirects to booking page with appointment ID."""
+    appointment = get_object_or_404(Appointment, id=appointment_id, patient=request.user)
+
+    # Check if appointment can be edited (status check)
+    if appointment.status not in ["pending", "confirmed"]:
+        messages.error(
+            request,
+            "This appointment cannot be edited. "
+            "It may have been completed or cancelled.",
+        )
+        return redirect("appointments:detail", appointment_id=appointment.id)
+
+    # Redirect to booking page with appointment ID for editing
+    return redirect(f"{reverse('appointments:book')}?edit={appointment_id}")
 
 
 @login_required
