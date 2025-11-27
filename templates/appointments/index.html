@@ -1,6 +1,166 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
+<script>
+  let selectedDoctor = null;
+  let selectedDate = null;
+  let selectedTime = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle doctor selection
+    document.querySelectorAll('.book-doctor-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const doctorId = this.dataset.doctorId;
+        const doctorName = this.dataset.doctorName;
+        selectedDoctor = doctorId;
+        
+        // Update UI to show selected doctor
+        document.querySelectorAll('.book-doctor-btn').forEach(b => {
+          b.classList.remove('btn-success');
+          b.classList.add('btn-primary');
+          b.textContent = 'Book Now';
+        });
+        this.classList.remove('btn-primary');
+        this.classList.add('btn-success');
+        this.textContent = '✓ Selected';
+        
+        // Update booking summary
+        updateBookingSummary();
+      });
+    });
+
+    // Handle time slot selection
+    document.querySelectorAll('.time-slot-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        selectedTime = this.dataset.time;
+        
+        // Update UI
+        document.querySelectorAll('.time-slot-btn').forEach(b => {
+          b.classList.remove('btn-primary');
+          b.classList.add('btn-outline-secondary');
+        });
+        this.classList.remove('btn-outline-secondary');
+        this.classList.add('btn-primary');
+        
+        updateBookingSummary();
+      });
+    });
+
+    // Handle date selection
+    const dateInput = document.getElementById('appointment-date');
+    if (dateInput) {
+      dateInput.addEventListener('change', function() {
+        selectedDate = this.value;
+        updateBookingSummary();
+      });
+      // Set min date to today
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.setAttribute('min', today);
+      if (!dateInput.value) {
+        dateInput.value = today;
+        selectedDate = today;
+      }
+    }
+
+    // Handle confirm appointment
+    const confirmBtn = document.getElementById('confirm-appointment-btn');
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!selectedDoctor || !selectedDate || !selectedTime) {
+          alert('Please select a doctor, date, and time before confirming.');
+          return;
+        }
+        
+        // Submit the booking
+        submitBooking();
+      });
+    }
+
+    function updateBookingSummary() {
+      const doctorNameEl = document.getElementById('summary-doctor');
+      const dateEl = document.getElementById('summary-date');
+      const timeEl = document.getElementById('summary-time');
+      
+      if (selectedDoctor && doctorNameEl) {
+        const doctorBtn = document.querySelector(`[data-doctor-id="${selectedDoctor}"]`);
+        doctorNameEl.textContent = doctorBtn ? doctorBtn.dataset.doctorName : 'Not selected';
+      }
+      if (selectedDate && dateEl) {
+        const dateObj = new Date(selectedDate);
+        dateEl.textContent = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      }
+      if (selectedTime && timeEl) {
+        timeEl.textContent = selectedTime;
+      }
+    }
+
+    function submitBooking() {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{% url "appointments:book" %}';
+      
+      // Add CSRF token
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+      if (csrfToken) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken.value;
+        form.appendChild(csrfInput);
+      } else {
+        // Get CSRF token from cookie
+        const csrftoken = getCookie('csrftoken');
+        if (csrftoken) {
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = 'csrfmiddlewaretoken';
+          csrfInput.value = csrftoken;
+          form.appendChild(csrfInput);
+        }
+      }
+      
+      // Add form fields
+      const doctorInput = document.createElement('input');
+      doctorInput.type = 'hidden';
+      doctorInput.name = 'doctor';
+      doctorInput.value = selectedDoctor;
+      form.appendChild(doctorInput);
+      
+      const dateInput = document.createElement('input');
+      dateInput.type = 'hidden';
+      dateInput.name = 'appointment_date';
+      dateInput.value = selectedDate;
+      form.appendChild(dateInput);
+      
+      const timeInput = document.createElement('input');
+      timeInput.type = 'hidden';
+      timeInput.name = 'appointment_time';
+      timeInput.value = selectedTime;
+      form.appendChild(timeInput);
+      
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  });
+</script>
     <div style="background: var(--cl-bg); min-height: calc(100vh - 200px);">
         <!-- Page Header -->
         <header style="background: white; border-bottom: 1px solid var(--cl-border);">
@@ -21,9 +181,9 @@
                                       color: var(--cl-text-muted)">Find and schedule with healthcare professionals</p>
                         </div>
                     </div>
-                    <button class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-filter me-2"></i>Filters
-                    </button>
+                    <a href="{% url 'appointments:index' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-list me-2"></i>My Appointments
+                    </a>
                 </div>
             </div>
         </header>
@@ -33,88 +193,61 @@
                 <div class="col-lg-8">
                     <h3 class="mb-4" style="font-size: var(--cl-h3); color: var(--cl-text);">Available Doctors</h3>
                     <div class="d-flex flex-column gap-3 mb-4">
-                        <!-- Doctor Card 1 -->
-                        <div class="card" style="border: 1px solid var(--cl-border);">
-                            <div class="card-body">
-                                <div class="d-flex gap-3">
-                                    <div class="d-flex align-items-center justify-content-center"
-                                         style="width: 5rem;
-                                                height: 5rem;
-                                                border-radius: var(--cl-radius-lg);
-                                                background: var(--cl-muted-bg);
-                                                flex-shrink: 0">
-                                        <i class="fas fa-user-md fa-2x" style="color: var(--cl-blue);"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <div>
-                                                <h5 class="mb-1" style="font-size: var(--cl-h4); color: var(--cl-text);">Dr. Michael Chen</h5>
-                                                <p class="text-muted mb-0" style="font-size: var(--cl-sm);">General Practice</p>
+                        {% if doctors_with_specialty %}
+                            {% for item in doctors_with_specialty %}
+                            {% with doctor=item.doctor specialty=item.specialty %}
+                            <!-- Doctor Card -->
+                            <div class="card" style="border: 1px solid var(--cl-border);">
+                                <div class="card-body">
+                                    <div class="d-flex gap-3">
+                                        <div class="d-flex align-items-center justify-content-center"
+                                             style="width: 5rem;
+                                                    height: 5rem;
+                                                    border-radius: var(--cl-radius-lg);
+                                                    background: var(--cl-muted-bg);
+                                                    flex-shrink: 0">
+                                            <i class="fas fa-user-md fa-2x" style="color: var(--cl-blue);"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <h5 class="mb-1" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                                        {{ doctor.get_full_name|default:doctor.username }}
+                                                    </h5>
+                                                    <p class="text-muted mb-0" style="font-size: var(--cl-sm);">
+                                                        {{ specialty }}
+                                                    </p>
+                                                </div>
+                                                <span class="badge bg-success">★ 4.8</span>
                                             </div>
-                                            <span class="badge bg-success">★ 4.9</span>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-3 mb-2"
-                                             style="font-size: var(--cl-sm);
-                                                    color: var(--cl-text-muted)">
-                                            <span><i class="fas fa-map-marker-alt me-1"></i>0.8 mi</span>
-                                            <span><i class="fas fa-user me-1"></i>234 reviews</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
-                                                <i class="fas fa-clock me-1" style="color: var(--cl-teal);"></i>Next: Nov 7, 2025 10:00 AM
-                                            </span>
-                                            <div class="d-flex gap-2">
-                                                <button class="btn btn-outline-primary btn-sm">
-                                                    <i class="fas fa-video me-1"></i>Virtual
-                                                </button>
-                                                <button class="btn btn-primary btn-sm">Book Now</button>
+                                            <div class="d-flex align-items-center gap-3 mb-2"
+                                                 style="font-size: var(--cl-sm);
+                                                        color: var(--cl-text-muted)">
+                                                <span><i class="fas fa-user me-1"></i>Available</span>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Doctor Card 2 -->
-                        <div class="card" style="border: 1px solid var(--cl-border);">
-                            <div class="card-body">
-                                <div class="d-flex gap-3">
-                                    <div class="d-flex align-items-center justify-content-center"
-                                         style="width: 5rem;
-                                                height: 5rem;
-                                                border-radius: var(--cl-radius-lg);
-                                                background: var(--cl-muted-bg);
-                                                flex-shrink: 0">
-                                        <i class="fas fa-user-md fa-2x" style="color: var(--cl-blue);"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <div>
-                                                <h5 class="mb-1" style="font-size: var(--cl-h4); color: var(--cl-text);">Dr. Sarah Williams</h5>
-                                                <p class="text-muted mb-0" style="font-size: var(--cl-sm);">Internal Medicine</p>
-                                            </div>
-                                            <span class="badge bg-success">★ 4.8</span>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-3 mb-2"
-                                             style="font-size: var(--cl-sm);
-                                                    color: var(--cl-text-muted)">
-                                            <span><i class="fas fa-map-marker-alt me-1"></i>1.2 mi</span>
-                                            <span><i class="fas fa-user me-1"></i>189 reviews</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
-                                                <i class="fas fa-clock me-1" style="color: var(--cl-teal);"></i>Next: Nov 7, 2025 02:30 PM
-                                            </span>
-                                            <div class="d-flex gap-2">
-                                                <button class="btn btn-outline-primary btn-sm">
-                                                    <i class="fas fa-video me-1"></i>Virtual
-                                                </button>
-                                                <button class="btn btn-primary btn-sm">Book Now</button>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
+                                                    <i class="fas fa-clock me-1" style="color: var(--cl-teal);"></i>Ready to book
+                                                </span>
+                                                <div class="d-flex gap-2">
+                                                    <button class="btn btn-primary btn-sm book-doctor-btn" 
+                                                            data-doctor-id="{{ doctor.id }}"
+                                                            data-doctor-name="{{ doctor.get_full_name|default:doctor.username }}">
+                                                        Book Now
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            {% endwith %}
+                            {% endfor %}
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>No doctors available at this time.
                         </div>
+                        {% endif %}
                     </div>
                     <!-- Time Slots -->
                     <div class="card" style="border: 1px solid var(--cl-border);">
@@ -125,28 +258,40 @@
                         <div class="card-body">
                             <div class="row g-2">
                                 <div class="col-md-3 col-6">
-                                    <button class="btn btn-outline-secondary w-100">09:00 AM</button>
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="09:00 AM">09:00 AM</button>
                                 </div>
                                 <div class="col-md-3 col-6">
-                                    <button class="btn btn-outline-secondary w-100">09:30 AM</button>
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="09:30 AM">09:30 AM</button>
                                 </div>
                                 <div class="col-md-3 col-6">
-                                    <button class="btn btn-primary w-100">10:00 AM</button>
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="10:00 AM">10:00 AM</button>
                                 </div>
                                 <div class="col-md-3 col-6">
-                                    <button class="btn btn-outline-secondary w-100">10:30 AM</button>
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="10:30 AM">10:30 AM</button>
                                 </div>
                                 <div class="col-md-3 col-6">
-                                    <button class="btn btn-outline-secondary w-100">11:00 AM</button>
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="11:00 AM">11:00 AM</button>
                                 </div>
                                 <div class="col-md-3 col-6">
-                                    <button class="btn btn-outline-secondary w-100">02:00 PM</button>
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="11:30 AM">11:30 AM</button>
                                 </div>
                                 <div class="col-md-3 col-6">
-                                    <button class="btn btn-outline-secondary w-100">02:30 PM</button>
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="02:00 PM">02:00 PM</button>
                                 </div>
                                 <div class="col-md-3 col-6">
-                                    <button class="btn btn-outline-secondary w-100">03:00 PM</button>
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="02:30 PM">02:30 PM</button>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="03:00 PM">03:00 PM</button>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="03:30 PM">03:30 PM</button>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="04:00 PM">04:00 PM</button>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <button class="btn btn-outline-secondary w-100 time-slot-btn" data-time="04:30 PM">04:30 PM</button>
                                 </div>
                             </div>
                         </div>
@@ -166,8 +311,11 @@
                                 </h5>
                             </div>
                             <div class="card-body text-center">
-                                <p class="text-muted mb-3">Calendar widget coming soon...</p>
-                                <input type="date" class="form-control" value="2025-11-07">
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="appointment-date"
+                                       name="appointment_date"
+                                       required>
                             </div>
                         </div>
                         <!-- Booking Summary -->
@@ -180,18 +328,24 @@
                             <div class="card-body">
                                 <div class="d-flex flex-column gap-2">
                                     <div class="d-flex justify-content-between p-2 bg-white rounded">
-                                        <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Appointment Type</span>
-                                        <span style="font-size: var(--cl-sm); color: var(--cl-text);">In-Person</span>
+                                        <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Doctor</span>
+                                        <span style="font-size: var(--cl-sm); color: var(--cl-text);" id="summary-doctor">Not selected</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between p-2 bg-white rounded">
+                                        <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Date</span>
+                                        <span style="font-size: var(--cl-sm); color: var(--cl-text);" id="summary-date">Not selected</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between p-2 bg-white rounded">
+                                        <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Time</span>
+                                        <span style="font-size: var(--cl-sm); color: var(--cl-text);" id="summary-time">Not selected</span>
                                     </div>
                                     <div class="d-flex justify-content-between p-2 bg-white rounded">
                                         <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Duration</span>
                                         <span style="font-size: var(--cl-sm); color: var(--cl-text);">30 minutes</span>
                                     </div>
-                                    <div class="d-flex justify-content-between p-2 bg-white rounded">
-                                        <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">Consultation Fee</span>
-                                        <span style="font-size: var(--cl-sm); color: var(--cl-text);">$75</span>
-                                    </div>
-                                    <button class="btn btn-success w-100 mt-3">Confirm Appointment</button>
+                                    <button class="btn btn-success w-100 mt-3" id="confirm-appointment-btn">
+                                        <i class="fas fa-check me-2"></i>Confirm Appointment
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -200,4 +354,5 @@
             </div>
         </div>
     </div>
+    {% csrf_token %}
 {% endblock %}
