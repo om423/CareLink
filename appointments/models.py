@@ -7,7 +7,7 @@ class Appointment(models.Model):
     """Appointment model for booking doctor visits."""
 
     STATUS_CHOICES = [
-        ("pending", "Pending"),
+        ("pending", "Scheduled"),
         ("confirmed", "Confirmed"),
         ("completed", "Completed"),
         ("cancelled", "Cancelled"),

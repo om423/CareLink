@@ -18,134 +18,355 @@
   {% endif %}
 
   document.addEventListener('DOMContentLoaded', function() {
+    // Ensure all form elements are enabled and editable
+    document.querySelectorAll('input, select, textarea, button').forEach(el => {
+      el.disabled = false;
+      el.readOnly = false;
+      el.style.pointerEvents = 'auto';
+      el.style.cursor = el.tagName === 'BUTTON' || el.type === 'radio' ? 'pointer' : 'auto';
+    });
+    
     {% if edit_appointment %}
     // Pre-populate form fields after DOM is loaded
-    // Set the date input
+    // Set the date input (make sure it's editable)
     const dateInput = document.getElementById('appointment-date');
     if (dateInput) {
       dateInput.value = selectedDate;
+      dateInput.disabled = false;
+      dateInput.readOnly = false;
+      dateInput.style.pointerEvents = 'auto';
     }
     
-    // Set appointment type radio
+    // Set appointment type radio (make sure it's clickable)
     const typeRadio = document.querySelector(`input[name="appointment_type"][value="${selectedAppointmentType}"]`);
     if (typeRadio) {
       typeRadio.checked = true;
+      typeRadio.disabled = false;
       selectedAppointmentType = typeRadio.value;
     }
+    
+    // Make sure all appointment type radios are enabled
+    document.querySelectorAll('input[name="appointment_type"]').forEach(radio => {
+      radio.disabled = false;
+      radio.style.pointerEvents = 'auto';
+    });
     
     // Update booking summary
     updateBookingSummary();
     
-    // Highlight the selected doctor button
-    setTimeout(() => {
-      const doctorBtn = document.querySelector(`[data-doctor-id="${selectedDoctor}"]`);
-      if (doctorBtn) {
-        doctorBtn.click();
-      }
-      
-      // Highlight the selected time slot
-      const timeBtn = document.querySelector(`[data-time="${selectedTime}"]`);
-      if (timeBtn) {
-        timeBtn.click();
-      }
-      
-      // Show time slots if doctor and date are selected
-      checkTimeSlotsVisibility();
-    }, 200);
+      // Highlight the selected doctor button (but allow changing)
+      setTimeout(() => {
+        const doctorBtn = document.querySelector(`[data-doctor-id="${selectedDoctor}"]`);
+        if (doctorBtn) {
+          // Manually trigger the selection without preventing future clicks
+          selectedDoctor = doctorBtn.dataset.doctorId;
+          doctorBtn.classList.remove('btn-primary');
+          doctorBtn.classList.add('btn-success');
+          doctorBtn.textContent = '✓ Selected';
+          doctorBtn.disabled = false;
+          doctorBtn.style.pointerEvents = 'auto';
+          doctorBtn.style.cursor = 'pointer';
+          doctorBtn.removeAttribute('disabled');
+          
+          // Move time slots section
+          const timeSlotsSection = document.getElementById('time-slots-section');
+          if (timeSlotsSection) {
+            const doctorCard = doctorBtn.closest('.doctor-card');
+            if (doctorCard) {
+              if (timeSlotsSection.parentNode) {
+                timeSlotsSection.parentNode.removeChild(timeSlotsSection);
+              }
+              const container = doctorCard.parentNode;
+              let nextCard = doctorCard.nextElementSibling;
+              while (nextCard && nextCard.id === 'time-slots-section') {
+                nextCard = nextCard.nextElementSibling;
+              }
+              if (nextCard) {
+                container.insertBefore(timeSlotsSection, nextCard);
+              } else {
+                container.appendChild(timeSlotsSection);
+              }
+            }
+          }
+        }
+        
+        // Show time slots section
+        checkTimeSlotsVisibility();
+        
+        // Re-setup doctor button handlers after DOM modifications
+        setTimeout(() => {
+          setupDoctorButtonHandlers();
+          console.log('Re-setup doctor buttons after edit mode DOM changes');
+        }, 100);
+        
+        // Highlight the selected time slot (but allow changing)
+        setTimeout(() => {
+          const timeBtn = document.querySelector(`[data-time="${selectedTime}"]`);
+          if (timeBtn) {
+            selectedTime = timeBtn.dataset.time;
+            timeBtn.classList.remove('btn-outline-secondary');
+            timeBtn.classList.add('btn-primary');
+            timeBtn.disabled = false;
+            timeBtn.style.pointerEvents = 'auto';
+            timeBtn.style.cursor = 'pointer';
+            timeBtn.removeAttribute('disabled');
+          }
+          updateBookingSummary();
+          // Re-enable time slot buttons
+          enableTimeSlotButtons();
+        }, 200);
+      }, 500);
     {% endif %}
     // Get the time slots section and remove it from its current position
     const timeSlotsSection = document.getElementById('time-slots-section');
     let timeSlotsParent = null;
     if (timeSlotsSection) {
       timeSlotsParent = timeSlotsSection.parentNode;
+      {% if not edit_appointment %}
       timeSlotsSection.style.display = 'none';
+      {% endif %}
     }
     
-    // Handle doctor selection
-    document.querySelectorAll('.book-doctor-btn').forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const doctorId = this.dataset.doctorId;
-        const doctorName = this.dataset.doctorName;
-        selectedDoctor = doctorId;
-        
-        // Update UI to show selected doctor
-        document.querySelectorAll('.book-doctor-btn').forEach(b => {
-          b.classList.remove('btn-success');
-          b.classList.add('btn-primary');
-          b.textContent = 'Book Now';
-        });
-        this.classList.remove('btn-primary');
-        this.classList.add('btn-success');
-        this.textContent = '✓ Selected';
-        
-        // Move time slots section to appear right after this doctor's card
-        if (timeSlotsSection) {
-          // Find the doctor card that was clicked
-          const doctorCard = this.closest('.doctor-card');
-          if (doctorCard) {
-            // Remove from current position if it exists elsewhere
-            if (timeSlotsSection.parentNode) {
-              timeSlotsSection.parentNode.removeChild(timeSlotsSection);
-            }
-            // Find the next doctor card or the end of the container
-            const container = doctorCard.parentNode;
-            let nextCard = doctorCard.nextElementSibling;
-            // Skip if next element is already the time slots section
-            while (nextCard && nextCard.id === 'time-slots-section') {
-              nextCard = nextCard.nextElementSibling;
-            }
-            // Insert right after the selected doctor's card
-            if (nextCard) {
-              container.insertBefore(timeSlotsSection, nextCard);
-            } else {
-              container.appendChild(timeSlotsSection);
-            }
+    // Handle doctor selection using event delegation to ensure it always works
+    function handleDoctorClick(e) {
+      const btn = e.target.closest('.book-doctor-btn');
+      if (!btn) {
+        console.log('No doctor button found in handleDoctorClick');
+        return;
+      }
+      
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      const doctorId = btn.dataset.doctorId;
+      const doctorName = btn.dataset.doctorName;
+      console.log('Setting selectedDoctor to:', doctorId, 'from button:', btn);
+      selectedDoctor = doctorId;
+      
+      // Update UI to show selected doctor
+      document.querySelectorAll('.book-doctor-btn').forEach(b => {
+        b.classList.remove('btn-success');
+        b.classList.add('btn-primary');
+        b.textContent = 'Book Now';
+        b.disabled = false;
+        b.style.pointerEvents = 'auto';
+        b.style.cursor = 'pointer';
+        b.style.opacity = '1';
+      });
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-success');
+      btn.textContent = '✓ Selected';
+      btn.disabled = false;
+      btn.style.pointerEvents = 'auto';
+      btn.style.cursor = 'pointer';
+      
+      // Move time slots section to appear right after this doctor's card
+      const timeSlotsSection = document.getElementById('time-slots-section');
+      if (timeSlotsSection) {
+        // Find the doctor card that was clicked
+        const doctorCard = btn.closest('.doctor-card');
+        if (doctorCard) {
+          // Remove from current position if it exists elsewhere
+          if (timeSlotsSection.parentNode) {
+            timeSlotsSection.parentNode.removeChild(timeSlotsSection);
+          }
+          // Find the next doctor card or the end of the container
+          const container = doctorCard.parentNode;
+          let nextCard = doctorCard.nextElementSibling;
+          // Skip if next element is already the time slots section
+          while (nextCard && nextCard.id === 'time-slots-section') {
+            nextCard = nextCard.nextElementSibling;
+          }
+          // Insert right after the selected doctor's card
+          if (nextCard) {
+            container.insertBefore(timeSlotsSection, nextCard);
+          } else {
+            container.appendChild(timeSlotsSection);
           }
         }
+      }
+      
+      // Update booking summary and check if time slots should be shown
+      updateBookingSummary();
+      console.log('Doctor selected:', selectedDoctor, 'Date:', selectedDate);
+      checkTimeSlotsVisibility();
+      
+      // Re-setup doctor buttons after selection (in case DOM changed)
+      setTimeout(setupDoctorButtonHandlers, 100);
+    }
+    
+    // Setup doctor button handlers directly (more reliable)
+    function setupDoctorButtonHandlers() {
+      const buttons = document.querySelectorAll('.book-doctor-btn');
+      console.log('Setting up', buttons.length, 'doctor buttons');
+      
+      buttons.forEach(btn => {
+        // Make sure button is enabled
+        btn.disabled = false;
+        btn.style.pointerEvents = 'auto';
+        btn.style.cursor = 'pointer';
+        btn.style.opacity = '1';
+        btn.removeAttribute('disabled');
         
-        // Update booking summary and check if time slots should be shown
-        updateBookingSummary();
-        checkTimeSlotsVisibility();
-      });
-    });
-
-    // Handle time slot selection
-    document.querySelectorAll('.time-slot-btn').forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        selectedTime = this.dataset.time;
-        
-        // Update UI
-        document.querySelectorAll('.time-slot-btn').forEach(b => {
-          b.classList.remove('btn-primary');
-          b.classList.add('btn-outline-secondary');
+        // Store the original onclick if any, then remove all event listeners by cloning
+        const newBtn = btn.cloneNode(true);
+        // Ensure all attributes are copied
+        Array.from(btn.attributes).forEach(attr => {
+          if (attr.name !== 'onclick') { // Don't copy onclick handlers
+            newBtn.setAttribute(attr.name, attr.value);
+          }
         });
-        this.classList.remove('btn-outline-secondary');
-        this.classList.add('btn-primary');
         
-        updateBookingSummary();
+        // Replace the button
+        if (btn.parentNode) {
+          btn.parentNode.replaceChild(newBtn, btn);
+        }
+        
+        // Add click handler to the new button
+        newBtn.addEventListener('click', function(e) {
+          console.log('Doctor button clicked!', this.dataset.doctorId, this);
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          handleDoctorClick(e);
+        }, true); // Use capture phase
+        
+        // Also add a regular click handler
+        newBtn.onclick = function(e) {
+          console.log('Doctor button onclick handler!', this.dataset.doctorId);
+          e.preventDefault();
+          e.stopPropagation();
+          handleDoctorClick(e);
+        };
       });
-    });
+      
+      console.log('Doctor buttons set up:', document.querySelectorAll('.book-doctor-btn').length);
+    }
+    
+    // Setup doctor buttons - but wait for edit mode to finish if applicable
+    {% if edit_appointment %}
+    // In edit mode, wait for pre-population to complete before setting up handlers
+    setTimeout(() => {
+      setupDoctorButtonHandlers();
+      console.log('Doctor buttons set up after edit mode pre-population');
+    }, 600);
+    {% else %}
+    // In normal mode, set up immediately
+    setupDoctorButtonHandlers();
+    {% endif %}
+    
+    // Also use event delegation as backup (this should always work)
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.book-doctor-btn');
+      if (btn) {
+        console.log('Event delegation caught doctor button click');
+        e.preventDefault();
+        e.stopPropagation();
+        handleDoctorClick(e);
+      }
+    }, true);
+
+    // Handle time slot selection using event delegation
+    function handleTimeSlotClick(e) {
+      const btn = e.target.closest('.time-slot-btn');
+      if (!btn) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      selectedTime = btn.dataset.time;
+      
+      // Update UI
+      document.querySelectorAll('.time-slot-btn').forEach(b => {
+        b.classList.remove('btn-primary');
+        b.classList.add('btn-outline-secondary');
+        b.disabled = false;
+        b.style.pointerEvents = 'auto';
+        b.style.cursor = 'pointer';
+      });
+      btn.classList.remove('btn-outline-secondary');
+      btn.classList.add('btn-primary');
+      btn.disabled = false;
+      btn.style.pointerEvents = 'auto';
+      btn.style.cursor = 'pointer';
+      
+      updateBookingSummary();
+    }
+    
+    // Use event delegation on the document for time slot buttons
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.time-slot-btn')) {
+        handleTimeSlotClick(e);
+      }
+    }, true); // Use capture phase
+    
+    // Also ensure all time slot buttons are enabled
+    function enableTimeSlotButtons() {
+      document.querySelectorAll('.time-slot-btn').forEach(btn => {
+        btn.disabled = false;
+        btn.style.pointerEvents = 'auto';
+        btn.style.cursor = 'pointer';
+        btn.style.opacity = '1';
+        btn.removeAttribute('disabled');
+      });
+    }
+    
+    enableTimeSlotButtons();
+    
+    // Re-enable after time slots section is shown
+    setTimeout(enableTimeSlotButtons, 600);
 
     // Handle date selection
     const dateInput = document.getElementById('appointment-date');
     if (dateInput) {
+      // Make sure date input is always enabled and editable
+      dateInput.disabled = false;
+      dateInput.readOnly = false;
+      dateInput.style.pointerEvents = 'auto';
+      
+      // Initialize selectedDate if date is already set
+      if (dateInput.value) {
+        selectedDate = dateInput.value;
+      }
+      
       dateInput.addEventListener('change', function() {
+        selectedDate = this.value;
+        console.log('Date selected:', selectedDate, 'Doctor:', selectedDoctor);
+        updateBookingSummary();
+        checkTimeSlotsVisibility();
+      });
+      
+      // Also listen for input event in case change doesn't fire
+      dateInput.addEventListener('input', function() {
         selectedDate = this.value;
         updateBookingSummary();
         checkTimeSlotsVisibility();
       });
+      
       // Set min date to today
       const today = new Date().toISOString().split('T')[0];
       dateInput.setAttribute('min', today);
+      {% if not edit_appointment %}
       if (!dateInput.value) {
         dateInput.value = today;
         selectedDate = today;
         // Check visibility after setting default date
         setTimeout(checkTimeSlotsVisibility, 100);
       }
+      {% endif %}
     }
+    
+    // Make sure all appointment type radios are enabled
+    document.querySelectorAll('input[name="appointment_type"]').forEach(radio => {
+      radio.disabled = false;
+      radio.style.pointerEvents = 'auto';
+      radio.addEventListener('change', function() {
+        selectedAppointmentType = this.value;
+        updateBookingSummary();
+      });
+    });
     
     // Function to check if time slots should be visible
     function checkTimeSlotsVisibility() {

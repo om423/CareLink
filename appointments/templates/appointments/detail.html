@@ -8,10 +8,10 @@
           <i class="fas fa-calendar-alt me-2" style="color: var(--cl-blue);"></i>Appointment Details
         </h2>
         <div class="d-flex gap-2">
-          {% if can_edit %}
-          <a href="{% url 'appointments:edit' appointment.id %}" class="btn btn-warning">
-            <i class="fas fa-edit me-2"></i>Edit Appointment
-          </a>
+          {% if can_cancel %}
+          <button type="button" class="btn btn-danger" id="cancel-appointment-btn-detail" data-appointment-id="{{ appointment.id }}" data-doctor-name="{{ appointment.doctor.get_full_name|default:appointment.doctor.username }}" data-appointment-date="{{ appointment.appointment_date|date:'M d, Y' }}" data-appointment-time="{{ appointment.appointment_time|time:'g:i A' }}">
+            <i class="fas fa-times me-2"></i>Cancel Appointment
+          </button>
           {% endif %}
           <a href="{% url 'appointments:index' %}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Back to Appointments
@@ -71,7 +71,7 @@
               <strong><i class="fas fa-info-circle me-2"></i>Status:</strong>
               <p class="mb-0">
                 {% if appointment.status == "pending" %}
-                  <span class="badge bg-warning">Pending</span>
+                  <span class="badge bg-primary">Scheduled</span>
                 {% elif appointment.status == "confirmed" %}
                   <span class="badge bg-success">Confirmed</span>
                 {% elif appointment.status == "completed" %}
@@ -155,27 +155,70 @@
         </div>
       </div>
       {% endif %}
-
-      <!-- Patient can cancel appointment -->
-      {% if not is_doctor and can_cancel %}
-      <div class="card">
-        <div class="card-header" style="background: var(--cl-red, #e74c3c); color: white;">
-          <h5 class="mb-0">
-            <i class="fas fa-exclamation-triangle me-2"></i>Cancel Appointment
-          </h5>
-        </div>
-        <div class="card-body">
-          <p>Are you sure you want to cancel this appointment? This action cannot be undone.</p>
-          <form method="post" action="{% url 'appointments:cancel' appointment.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">
-              <i class="fas fa-times me-2"></i>Cancel Appointment
-            </button>
-          </form>
-        </div>
-      </div>
-      {% endif %}
     </div>
   </div>
 </div>
+
+<!-- Cancel Confirmation Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cancelModalLabel">
+          <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Cancel Appointment
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to cancel this appointment?</p>
+        <p class="text-muted mb-0" id="modal-appointment-details">
+          <!-- Details will be populated by JavaScript -->
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Appointment</button>
+        <form id="cancel-form" method="post" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-times me-2"></i>Yes, Cancel Appointment
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const cancelBtn = document.getElementById('cancel-appointment-btn-detail');
+  if (cancelBtn) {
+    const cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
+    const cancelForm = document.getElementById('cancel-form');
+    const modalDetails = document.getElementById('modal-appointment-details');
+    
+    cancelBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const appointmentId = this.dataset.appointmentId;
+      const doctorName = this.dataset.doctorName;
+      const appointmentDate = this.dataset.appointmentDate;
+      const appointmentTime = this.dataset.appointmentTime;
+      
+      // Update modal content
+      modalDetails.innerHTML = `
+        <strong>Doctor:</strong> ${doctorName}<br>
+        <strong>Date:</strong> ${appointmentDate}<br>
+        <strong>Time:</strong> ${appointmentTime}
+      `;
+      
+      // Update form action
+      cancelForm.action = `/appointments/${appointmentId}/cancel/`;
+      
+      // Show modal
+      cancelModal.show();
+    });
+  }
+});
+</script>
 {% endblock %}
