@@ -1,1 +1,27 @@
-# Register your models here.
+from django.contrib import admin
+
+from .models import Appointment
+
+
+@admin.register(Appointment)
+class AppointmentAdmin(admin.ModelAdmin):
+    list_display = [
+        "id",
+        "patient",
+        "doctor",
+        "appointment_date",
+        "appointment_time",
+        "appointment_type",
+        "status",
+        "created_at",
+    ]
+    list_filter = ["status", "appointment_type", "appointment_date", "created_at"]
+    search_fields = [
+        "patient__username",
+        "doctor__username",
+        "reason",
+        "notes",
+    ]
+    readonly_fields = ["created_at", "updated_at"]
+    date_hierarchy = "appointment_date"
+    ordering = ["-appointment_date", "-appointment_time"]

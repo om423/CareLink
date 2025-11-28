@@ -1,41 +1,25 @@
 {% extends 'base.html' %}
 {% block content %}
-<script>
-  // Ensure form works properly
-  document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form[action*="appointments/book"]');
-    const submitBtn = document.getElementById('submit-appointment-btn');
-    
-    if (form && submitBtn) {
-      // Remove any disabled state
-      submitBtn.disabled = false;
-      
-      // Override base template's form handler
-      form.addEventListener('submit', function(e) {
-        // Allow form to submit normally - don't disable button
-        submitBtn.disabled = false;
-        return true;
-      }, true); // Use capture phase to run before base template handler
-    }
-    
-    // Ensure all inputs are enabled
-    document.querySelectorAll('input, select, textarea').forEach(function(input) {
-      input.disabled = false;
-      input.readOnly = false;
-    });
-  });
-</script>
 <div class="container py-5">
   <div class="row">
     <div class="col-lg-8 mx-auto">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+          <i class="fas fa-edit me-2" style="color: var(--cl-blue);"></i>Edit Appointment
+        </h2>
+        <a href="{% url 'appointments:detail' appointment.id %}" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-2"></i>Back to Details
+        </a>
+      </div>
+
       <div class="card">
         <div class="card-header" style="background: var(--cl-blue); color: white;">
           <h3 class="mb-0">
-            <i class="fas fa-calendar-plus me-2"></i>Book New Appointment
+            <i class="fas fa-calendar-edit me-2"></i>Update Appointment Details
           </h3>
         </div>
         <div class="card-body">
-          <form method="post" action="{% url 'appointments:book' %}">
+          <form method="post">
             {% csrf_token %}
             
             <div class="mb-3">
@@ -80,6 +64,32 @@
             </div>
 
             <div class="mb-3">
+              <label class="form-label">
+                <i class="fas fa-video me-2"></i>Appointment Type <span class="text-danger">*</span>
+              </label>
+              <div class="mt-2">
+                {% for radio in form.appointment_type %}
+                  <div class="form-check mb-2">
+                    {{ radio.tag }}
+                    <label class="form-check-label" for="{{ radio.id_for_label }}">
+                      {% if radio.choice_value == "in_person" %}
+                        <i class="fas fa-hospital me-2"></i>In Person
+                      {% else %}
+                        <i class="fas fa-video me-2"></i>Virtual Visit
+                      {% endif %}
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+              {% if form.appointment_type.errors %}
+                <div class="text-danger small mt-1">{{ form.appointment_type.errors }}</div>
+              {% endif %}
+              {% if form.appointment_type.help_text %}
+                <small class="form-text text-muted">{{ form.appointment_type.help_text }}</small>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
               <label for="{{ form.reason.id_for_label }}" class="form-label">
                 <i class="fas fa-stethoscope me-2"></i>Reason for Appointment (Optional)
               </label>
@@ -109,10 +119,10 @@
             {% endif %}
 
             <div class="d-flex gap-2 mt-4">
-              <button type="submit" class="btn btn-primary" id="submit-appointment-btn">
-                <i class="fas fa-check me-2"></i>Book Appointment
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Save Changes
               </button>
-              <a href="{% url 'appointments:index' %}" class="btn btn-outline-secondary">
+              <a href="{% url 'appointments:detail' appointment.id %}" class="btn btn-outline-secondary">
                 <i class="fas fa-times me-2"></i>Cancel
               </a>
             </div>
@@ -120,33 +130,38 @@
         </div>
       </div>
 
-      {% if doctors %}
       <div class="card mt-4">
-        <div class="card-header">
+        <div class="card-header bg-warning">
           <h5 class="mb-0">
-            <i class="fas fa-info-circle me-2"></i>Available Doctors
+            <i class="fas fa-info-circle me-2"></i>Current Appointment Details
           </h5>
         </div>
         <div class="card-body">
-          <div class="list-group">
-            {% for doctor in doctors %}
-            <div class="list-group-item">
-              <div class="d-flex align-items-center">
-                <div class="flex-shrink-0">
-                  <i class="fas fa-user-doctor" style="font-size: 2rem; color: var(--cl-blue);"></i>
-                </div>
-                <div class="flex-grow-1 ms-3">
-                  <h6 class="mb-0">{{ doctor.get_full_name|default:doctor.username }}</h6>
-                  <small class="text-muted">{{ doctor.email }}</small>
-                </div>
-              </div>
+          <div class="row">
+            <div class="col-md-6">
+              <strong>Doctor:</strong> {{ appointment.doctor.get_full_name|default:appointment.doctor.username }}<br>
+              <strong>Date:</strong> {{ appointment.appointment_date|date:"M d, Y" }}<br>
+              <strong>Time:</strong> {{ appointment.appointment_time|time:"g:i A" }}
             </div>
-            {% endfor %}
+            <div class="col-md-6">
+              <strong>Type:</strong> 
+              {% if appointment.appointment_type == "virtual" %}
+                <span class="badge bg-info">Virtual Visit</span>
+              {% else %}
+                <span class="badge bg-primary">In Person</span>
+              {% endif %}<br>
+              <strong>Status:</strong> 
+              {% if appointment.status == "pending" %}
+                <span class="badge bg-warning">Pending</span>
+              {% elif appointment.status == "confirmed" %}
+                <span class="badge bg-success">Confirmed</span>
+              {% endif %}
+            </div>
           </div>
         </div>
       </div>
-      {% endif %}
     </div>
   </div>
 </div>
 {% endblock %}
+
