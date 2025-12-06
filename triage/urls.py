@@ -21,4 +21,9 @@ urlpatterns = [
         views.mark_review_completed,
         name="mark_review_completed",
     ),
+    path(
+        "admin/verify/<int:interaction_id>/",
+        views.verify_integrity,
+        name="verify_integrity",
+    ),
 ]

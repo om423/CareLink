@@ -85,6 +85,7 @@
                                     <th style="color: var(--cl-text);">Severity</th>
                                     <th style="color: var(--cl-text);">Timestamp</th>
                                     <th style="color: var(--cl-text);">Status</th>
+                                    <th style="color: var(--cl-text);">Verification</th>
                                     <th class="text-end" style="color: var(--cl-text);">Action</th>
                                 </tr>
                             </thead>
@@ -137,6 +138,15 @@
                                                     Unknown
                                                 {% endif %}
                                             </span>
+                                        </td>
+                                        <td>
+                                            {% if report.data_integrity_status == 'verified' %}
+                                                <span class="badge bg-success" title="Verified - Consistent"><i class="fas fa-check"></i> Verified</span>
+                                            {% elif report.data_integrity_status == 'discrepancy' %}
+                                                <span class="badge bg-danger" title="Discrepancy Found"><i class="fas fa-exclamation-circle"></i> Discrepancy</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary" title="Pending Verification"><i class="fas fa-clock"></i> Pending</span>
+                                            {% endif %}
                                         </td>
                                         <td class="text-end">
                                             <a href="{% url 'triage:detail' report.id %}"
