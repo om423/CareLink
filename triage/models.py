@@ -43,6 +43,24 @@ class TriageInteraction(models.Model):
         default="pending_review",
         help_text="Current status of the triage review process",
     )
+    
+    # Data Integrity Verification Fields
+    data_integrity_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending Verification"),
+            ("verified", "Verified - Consistent"),
+            ("discrepancy", "Discrepancy Found"),
+        ],
+        default="pending",
+        help_text="Status of symptom verification against medical records"
+    )
+    data_integrity_notes = models.TextField(
+        blank=True, 
+        null=True, 
+        help_text="Notes regarding data integrity or discrepancies found"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -274,7 +274,51 @@
                             {% endif %}
                         </div>
                     </div>
-                    <!-- 5. Doctor Notes / Feedback Section (Doctors/Staff/Admin Only) -->
+                    <!-- 5. Data Integrity Verification Section (Doctors/Staff Only) -->
+                    {% if is_doctor_view %}
+                        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+                            <div class="card-header bg-transparent border-bottom">
+                                <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                    <i class="fas fa-check-double me-2" style="color: var(--cl-blue);"></i>
+                                    Data Integrity Verification
+                                </h5>
+                                <small class="text-muted">Verify patient-reported symptoms against medical records</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="integrityForm"
+                                      method="post"
+                                      data-interaction-id="{{ interaction.id }}">
+                                    {% csrf_token %}
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label" style="font-weight: var(--cl-font-medium);">Verification Status</label>
+                                        <select name="integrity_status" class="form-select">
+                                            <option value="pending" {% if interaction.data_integrity_status == 'pending' %}selected{% endif %}>Pending Verification</option>
+                                            <option value="verified" {% if interaction.data_integrity_status == 'verified' %}selected{% endif %}>Verified - Consistent</option>
+                                            <option value="discrepancy" {% if interaction.data_integrity_status == 'discrepancy' %}selected{% endif %}>Discrepancy Found</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label" style="font-weight: var(--cl-font-medium);">Integrity Notes</label>
+                                        <textarea name="integrity_notes"
+                                                  rows="3"
+                                                  class="form-control"
+                                                  placeholder="Describe any discrepancies or confirmation details...">{{ interaction.data_integrity_notes|default:"" }}</textarea>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <button type="submit" class="btn btn-outline-primary">
+                                            <i class="fas fa-shield-alt me-2"></i>Update Verification
+                                        </button>
+                                    </div>
+                                </form>
+                                <div id="integrityMessage" class="mt-3" style="min-height: 24px;"></div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- 6. Doctor Notes / Feedback Section (Doctors/Staff/Admin Only) -->
                     {% if user.is_staff or user.is_superuser or user.patient_profile.role == 'doctor' %}
                         <div class="card mb-4" style="border: 1px solid var(--cl-border);">
                             <div class="card-header bg-transparent border-bottom">
@@ -599,6 +643,49 @@ document.getElementById("doctorNotesForm").addEventListener("submit", async func
         {% endif %}
         {% if is_doctor_view %}
             <script>
+document.getElementById("integrityForm")?.addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = new FormData(form);
+  const csrf = form.querySelector("[name=csrfmiddlewaretoken]").value;
+  const msgBox = document.getElementById("integrityMessage");
+  const saveButton = form.querySelector("button[type=submit]");
+  
+  // Disable button and show loading state
+  saveButton.disabled = true;
+  saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+  msgBox.textContent = "";
+  
+  try {
+    const res = await fetch(
+      `/triage/admin/verify/${form.dataset.interactionId}/`,
+      {
+        method: "POST",
+        headers: { "X-CSRFToken": csrf },
+        body: data,
+      }
+    );
+    
+    const json = await res.json();
+    
+    if (json.success) {
+      msgBox.innerHTML = `<span style="color: var(--cl-green);"><i class="fas fa-check-circle me-1"></i>Verification updated successfully.</span>`;
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        msgBox.textContent = "";
+      }, 3000);
+    } else {
+      msgBox.innerHTML = `<span style="color: var(--cl-red);"><i class="fas fa-exclamation-circle me-1"></i>${json.error || 'Failed to update verification.'}</span>`;
+    }
+  } catch (error) {
+    msgBox.innerHTML = `<span style="color: var(--cl-red);"><i class="fas fa-exclamation-circle me-1"></i>Error: ${error.message}</span>`;
+  } finally {
+    // Re-enable button
+    saveButton.disabled = false;
+    saveButton.innerHTML = '<i class="fas fa-shield-alt me-2"></i>Update Verification';
+  }
+});
+
 const markCompletedBtn = document.getElementById("markCompletedBtn");
 if (markCompletedBtn) {
   markCompletedBtn.addEventListener("click", async function(e) {

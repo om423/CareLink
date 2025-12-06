@@ -144,6 +144,54 @@ def update_doctor_notes(request, interaction_id):
     )
 
 
+@login_required
+@require_POST
+def verify_integrity(request, interaction_id):
+    """
+    Allow staff/admin or doctors to verify patient-reported symptoms against medical records.
+    """
+    # Check if user is staff/admin or has doctor role
+    can_verify = False
+    if request.user.is_staff or request.user.is_superuser:
+        can_verify = True
+    else:
+        try:
+            if PatientProfile is not None:
+                profile = PatientProfile.objects.get(user=request.user)
+                if profile.role == "doctor":
+                    can_verify = True
+        except Exception:
+            pass
+
+    if not can_verify:
+        return JsonResponse(
+            {"error": "Access denied. Only doctors/admins can verify records."}, status=403
+        )
+
+    try:
+        triage = TriageInteraction.objects.get(pk=interaction_id)
+    except TriageInteraction.DoesNotExist:
+        return JsonResponse({"error": "Triage record not found."}, status=404)
+
+    integrity_status = request.POST.get("integrity_status")
+    integrity_notes = (request.POST.get("integrity_notes") or "").strip()
+
+    if integrity_status not in ["pending", "verified", "discrepancy"]:
+        return JsonResponse({"error": "Invalid integrity status."}, status=400)
+
+    triage.data_integrity_status = integrity_status
+    triage.data_integrity_notes = integrity_notes
+    triage.save(update_fields=["data_integrity_status", "data_integrity_notes"])
+
+    return JsonResponse(
+        {
+            "success": True,
+            "integrity_status": triage.data_integrity_status,
+            "integrity_notes": triage.data_integrity_notes,
+        }
+    )
+
+
 def get_patient_context(user):
     """Helper to get patient context for triage."""
     patient_ctx = {}
