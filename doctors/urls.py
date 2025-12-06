@@ -7,6 +7,7 @@ app_name = "doctors"
 urlpatterns = [
     path("", views.index, name="index"),
     path("find/", views.find_doctor, name="find_doctor"),
+    path("manage-availability/", views.manage_availability, name="manage_availability"),
     path("assign/<int:interaction_id>/", views.assign_to_self, name="assign_to_self"),
     path("notes/<int:interaction_id>/add/", views.add_note, name="add_note"),
     path("feed/", views.triage_feed, name="triage_feed"),

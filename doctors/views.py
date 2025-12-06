@@ -3,6 +3,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.contrib import messages
+from django.db import transaction
 
 try:
     from reportlab.lib.pagesizes import letter
@@ -13,6 +15,8 @@ except ImportError:
 
 from accounts.views import doctor_required, patient_required
 from triage.models import TriageDoctorNote, TriageInteraction
+from .models import DoctorProfile, DoctorAvailability
+from .forms import DoctorProfileForm, DoctorAvailabilityFormSet
 
 
 @doctor_required
@@ -91,14 +95,70 @@ def find_doctor(request):
 
 
 @doctor_required
+def manage_availability(request):
+    """View to manage doctor's profile and availability schedule."""
+    # Get or create the DoctorProfile for the current user
+    # Provide defaults for non-nullable fields to avoid IntegrityError on creation
+    defaults = {
+        'specialty': 'General Practice',
+        'clinic_name': 'My Clinic',
+        'clinic_address': '123 Main St',
+        'consultation_fee': 100.00,
+        'years_of_experience': 0
+    }
+    profile, created = DoctorProfile.objects.get_or_create(
+        user=request.user,
+        defaults=defaults
+    )
+    
+    if created:
+        messages.info(request, "A new profile has been created for you. Please update your details.")
+
+    if request.method == "POST":
+        profile_form = DoctorProfileForm(request.POST, request.FILES, instance=profile)
+        formset = DoctorAvailabilityFormSet(request.POST, instance=profile)
+
+        if profile_form.is_valid() and formset.is_valid():
+            with transaction.atomic():
+                profile_form.save()
+                formset.save()
+            messages.success(request, "Profile and availability updated successfully.")
+            return redirect("doctors:manage_availability")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        profile_form = DoctorProfileForm(instance=profile)
+        # If no availabilities exist, create default Mon-Fri 9-5
+        if not profile.availabilities.exists():
+            initial_data = []
+            for day in range(7):
+                initial_data.append({
+                    'day_of_week': day,
+                    'start_time': '09:00',
+                    'end_time': '17:00',
+                    'is_available': day < 5  # Mon-Fri
+                })
+            # Use extra to show the forms, but we need to handle this carefully with formsets
+            # For now, let's just create the objects if they don't exist to simplify the formset usage
+            for data in initial_data:
+                DoctorAvailability.objects.create(doctor=profile, **data)
+        
+        formset = DoctorAvailabilityFormSet(instance=profile)
+
+    context = {
+        "profile_form": profile_form,
+        "formset": formset,
+    }
+    return render(request, "doctors/manage_availability.html", context)
+
+
+@doctor_required
 @require_POST
 def assign_to_self(request, interaction_id):
     """Assign a triage interaction to the current doctor."""
     interaction = get_object_or_404(TriageInteraction, id=interaction_id)
     interaction.assigned_doctor = request.user
     interaction.save()
-    from django.contrib import messages
-
     messages.success(request, "Case assigned. It will now appear in your dashboard.")
     return redirect("doctors:index")
 

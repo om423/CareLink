@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage Availability | CareLink{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Manage Profile & Availability</h1>
+            <p class="text-muted">Update your clinic details and weekly schedule.</p>
+        </div>
+        <a href="{% url 'doctors:index' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <!-- Left Column: Profile Details -->
+            <div class="col-lg-5 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0"><i class="fas fa-user-md me-2 text-primary"></i>Doctor Profile</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if profile_form.non_field_errors %}
+                        <div class="alert alert-danger">{{ profile_form.non_field_errors }}</div>
+                        {% endif %}
+
+                        {% for field in profile_form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <div class="form-text text-muted">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% if field.errors %}
+                            <div class="text-danger small mt-1">{{ field.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Weekly Schedule -->
+            <div class="col-lg-7 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0"><i class="fas fa-calendar-alt me-2 text-success"></i>Weekly Availability</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <small><i class="fas fa-info-circle me-1"></i> Set your standard weekly hours. Patients can only book appointments within these slots.</small>
+                        </div>
+
+                        {{ formset.management_form }}
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 20%;">Day</th>
+                                        <th style="width: 25%;">Start Time</th>
+                                        <th style="width: 25%;">End Time</th>
+                                        <th style="width: 15%;" class="text-center">Active</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for form in formset %}
+                                    <tr class="availability-row {% if not form.is_available.value %}table-secondary text-muted{% endif %}">
+                                        {{ form.id }}
+                                        {{ form.day_of_week }} <!-- Hidden field -->
+                                        
+                                        <td class="fw-bold">
+                                            <!-- Display Day Name based on forloop counter (0-6) -->
+                                            {% cycle 'Monday' 'Tuesday' 'Wednesday' 'Thursday' 'Friday' 'Saturday' 'Sunday' %}
+                                        </td>
+                                        <td>
+                                            {{ form.start_time }}
+                                            {% if form.start_time.errors %}
+                                            <div class="text-danger small">{{ form.start_time.errors }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ form.end_time }}
+                                            {% if form.end_time.errors %}
+                                            <div class="text-danger small">{{ form.end_time.errors }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="form-check form-switch d-flex justify-content-center">
+                                                {{ form.is_available }}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-5">
+            <button type="submit" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-save me-2"></i>Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Simple script to toggle row styling when availability checkbox changes
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"][name$="-is_available"]');
+        
+        checkboxes.forEach(chk => {
+            chk.addEventListener('change', function() {
+                const row = this.closest('tr');
+                if (this.checked) {
+                    row.classList.remove('table-secondary', 'text-muted');
+                    row.querySelectorAll('input[type="time"]').forEach(input => input.disabled = false);
+                } else {
+                    row.classList.add('table-secondary', 'text-muted');
+                    row.querySelectorAll('input[type="time"]').forEach(input => input.disabled = true);
+                }
+            });
+            
+            // Trigger initial state
+            chk.dispatchEvent(new Event('change'));
+        });
+    });
+</script>
+{% endblock %}
+

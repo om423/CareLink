@@ -46,14 +46,16 @@
                 <div class="col-md-3">
                     <div class="card text-white"
                          style="border: none;
-                                background: linear-gradient(to bottom right, var(--cl-green), #229954)">
+                                background: linear-gradient(to bottom right, var(--cl-green), #229954);
+                                cursor: pointer;"
+                         onclick="window.location.href='{% url 'doctors:manage_availability' %}'">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <small style="opacity: 0.9;">Availability</small>
                                 <i class="fas fa-calendar"></i>
                             </div>
-                            <h3 class="mb-1" style="font-size: var(--cl-h3);">Available</h3>
-                            <small style="opacity: 0.9;">Click to manage schedule</small>
+                            <h3 class="mb-1" style="font-size: var(--cl-h3);">Manage</h3>
+                            <small style="opacity: 0.9;">Click to update schedule</small>
                         </div>
                     </div>
                 </div>
