@@ -190,10 +190,48 @@
       // Update booking summary and check if time slots should be shown
       updateBookingSummary();
       console.log('Doctor selected:', selectedDoctor, 'Date:', selectedDate);
+      
+      // Update time slots based on doctor's availability
+      updateTimeSlotsForDoctor(btn);
+      
       checkTimeSlotsVisibility();
       
       // Re-setup doctor buttons after selection (in case DOM changed)
       setTimeout(setupDoctorButtonHandlers, 100);
+    }
+    
+    // Function to update time slots based on doctor's availability
+    function updateTimeSlotsForDoctor(doctorBtn) {
+      const availabilityTimes = doctorBtn.dataset.availabilityTimes;
+      const timeSlotsContainer = document.querySelector('#time-slots-section .card-body .row');
+      
+      if (!timeSlotsContainer) return;
+      
+      // Clear existing time slots
+      timeSlotsContainer.innerHTML = '';
+      
+      // Default time slots if no availability specified
+      const defaultTimes = [
+        '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
+        '11:00 AM', '11:30 AM', '02:00 PM', '02:30 PM',
+        '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM'
+      ];
+      
+      const times = availabilityTimes ? availabilityTimes.split(',') : defaultTimes;
+      
+      // Generate time slot buttons
+      times.forEach(time => {
+        const col = document.createElement('div');
+        col.className = 'col-md-3 col-6';
+        
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-outline-secondary w-100 time-slot-btn';
+        btn.setAttribute('data-time', time);
+        btn.textContent = time;
+        
+        col.appendChild(btn);
+        timeSlotsContainer.appendChild(col);
+      });
     }
     
     // Setup doctor button handlers directly (more reliable)
@@ -624,7 +662,7 @@
                     <div class="d-flex flex-column gap-3 mb-4">
                         {% if doctors_with_specialty %}
                             {% for item in doctors_with_specialty %}
-                            {% with doctor=item.doctor specialty=item.specialty %}
+                            {% with doctor=item.doctor specialty=item.specialty profile=item.profile %}
                             <!-- Doctor Card -->
                             <div class="card doctor-card" data-doctor-card-id="{{ doctor.id }}" style="border: 1px solid var(--cl-border);">
                                 <div class="card-body">
@@ -635,7 +673,12 @@
                                                     border-radius: var(--cl-radius-lg);
                                                     background: var(--cl-muted-bg);
                                                     flex-shrink: 0">
-                                            <i class="fas fa-user-md fa-2x" style="color: var(--cl-blue);"></i>
+                                            {% if profile and profile.profile_image %}
+                                                <img src="{{ profile.profile_image.url }}" alt="{{ doctor.get_full_name|default:doctor.username }}" 
+                                                     style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--cl-radius-lg);">
+                                            {% else %}
+                                                <i class="fas fa-user-md fa-2x" style="color: var(--cl-blue);"></i>
+                                            {% endif %}
                                         </div>
                                         <div class="flex-grow-1">
                                             <div class="d-flex justify-content-between align-items-start mb-2">
@@ -644,16 +687,39 @@
                                                         {{ doctor.get_full_name|default:doctor.username }}
                                                     </h5>
                                                     <p class="text-muted mb-0" style="font-size: var(--cl-sm);">
-                                                        {{ specialty }}
+                                                        <i class="fas fa-stethoscope me-1"></i>{{ specialty }}
+                                                        {% if profile and profile.years_of_experience %}
+                                                            <span class="ms-2"><i class="fas fa-certificate me-1"></i>{{ profile.years_of_experience }} years exp.</span>
+                                                        {% endif %}
                                                     </p>
                                                 </div>
+                                                {% if profile and profile.consultation_fee %}
+                                                <div class="text-end">
+                                                    <span class="badge bg-success">${{ profile.consultation_fee }}</span>
+                                                </div>
+                                                {% else %}
                                                 <span class="badge bg-success">★ 4.8</span>
+                                                {% endif %}
                                             </div>
-                                            <div class="d-flex align-items-center gap-3 mb-2"
-                                                 style="font-size: var(--cl-sm);
-                                                        color: var(--cl-text-muted)">
-                                                <span><i class="fas fa-user me-1"></i>Available</span>
+                                            {% if profile %}
+                                            <div class="mb-2" style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
+                                                {% if profile.clinic_name %}
+                                                <div class="mb-1">
+                                                    <i class="fas fa-hospital me-1"></i><strong>{{ profile.clinic_name }}</strong>
+                                                </div>
+                                                {% endif %}
+                                                {% if profile.clinic_address %}
+                                                <div class="mb-1">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>{{ profile.clinic_address|truncatewords:10 }}
+                                                </div>
+                                                {% endif %}
+                                                {% if profile.bio %}
+                                                <div class="mb-1">
+                                                    <i class="fas fa-info-circle me-1"></i>{{ profile.bio|truncatewords:15 }}
+                                                </div>
+                                                {% endif %}
                                             </div>
+                                            {% endif %}
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <span style="font-size: var(--cl-sm); color: var(--cl-text-muted);">
                                                     <i class="fas fa-clock me-1" style="color: var(--cl-teal);"></i>Ready to book
@@ -661,7 +727,8 @@
                                                 <div class="d-flex gap-2">
                                                     <button class="btn btn-primary btn-sm book-doctor-btn" 
                                                             data-doctor-id="{{ doctor.id }}"
-                                                            data-doctor-name="{{ doctor.get_full_name|default:doctor.username }}">
+                                                            data-doctor-name="{{ doctor.get_full_name|default:doctor.username }}"
+                                                            {% if item.availability_times %}data-availability-times="{{ item.availability_times|join:',' }}"{% endif %}>
                                                         Book Now
                                                     </button>
                                                 </div>

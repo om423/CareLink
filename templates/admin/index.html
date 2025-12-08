@@ -1,0 +1,21 @@
+{% extends "admin/index.html" %}
+{% load static %}
+
+{% block content %}
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; color: white;">
+    <h2 style="margin: 0 0 0.5rem 0; color: white;">
+        <i class="fas fa-chart-line me-2"></i>Platform Performance Dashboard
+    </h2>
+    <p style="margin: 0; opacity: 0.9;">
+        Monitor overall platform performance and user satisfaction metrics in real-time
+    </p>
+    <div style="margin-top: 1rem;">
+        <a href="{% url 'admin_dashboard' %}" 
+           style="background: white; color: #667eea; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">
+            <i class="fas fa-arrow-right me-2"></i>View Dashboard
+        </a>
+    </div>
+</div>
+{{ block.super }}
+{% endblock %}
+
