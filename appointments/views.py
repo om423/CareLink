@@ -10,6 +10,12 @@ from accounts.views import doctor_required, get_user_role, patient_required
 from .forms import AppointmentBookingForm, AppointmentUpdateForm
 from .models import Appointment
 
+try:
+    from doctors.models import DoctorProfile, DoctorAvailability
+except ImportError:
+    DoctorProfile = None
+    DoctorAvailability = None
+
 
 @patient_required
 def index(request):
@@ -111,30 +117,64 @@ def book(request):
                 )
                 return redirect("appointments:detail", appointment_id=appointment.id)
 
-    # Get list of available doctors
+    # Get list of available doctors with their profiles
     from django.contrib.auth.models import User
 
     doctors = User.objects.filter(patient_profile__role="doctor").order_by("username")
     
     # Extract specialty for each doctor and get all unique specialties
+    # Now use DoctorProfile if available, fallback to old method
     doctors_with_specialty = []
     specialties_set = set()
     
     for doctor in doctors:
         specialty = "General Practice"
-        if doctor.last_name and "(" in doctor.last_name:
-            # Extract specialty from last_name like "Chen (Cardiologist)"
+        profile = None
+        
+        # Try to get DoctorProfile
+        if DoctorProfile:
             try:
-                start = doctor.last_name.find("(") + 1
-                end = doctor.last_name.find(")")
-                if start > 0 and end > start:
-                    specialty = doctor.last_name[start:end]
-            except:
-                pass
+                profile = DoctorProfile.objects.select_related('user').prefetch_related('availabilities').get(user=doctor)
+                specialty = profile.specialty
+            except DoctorProfile.DoesNotExist:
+                # Fallback to old method
+                if doctor.last_name and "(" in doctor.last_name:
+                    try:
+                        start = doctor.last_name.find("(") + 1
+                        end = doctor.last_name.find(")")
+                        if start > 0 and end > start:
+                            specialty = doctor.last_name[start:end]
+                    except:
+                        pass
+        
         specialties_set.add(specialty)
+        
+        # Get availability times for this doctor
+        # Note: This is a simplified version - in a real app, you'd filter by day of week
+        # For now, we'll collect all unique time slots across all days
+        availability_times = []
+        if profile and DoctorAvailability:
+            # Get all available time slots from DoctorAvailability
+            availabilities = profile.availabilities.filter(is_available=True).order_by('day_of_week', 'start_time')
+            all_time_slots = set()  # Use set to avoid duplicates
+            for avail in availabilities:
+                if avail.start_time and avail.end_time:
+                    # Generate time slots between start and end (30 min intervals)
+                    from datetime import datetime, timedelta
+                    start_dt = datetime.combine(datetime.today(), avail.start_time)
+                    end_dt = datetime.combine(datetime.today(), avail.end_time)
+                    current = start_dt
+                    while current < end_dt:
+                        time_str = current.strftime("%I:%M %p").lstrip('0')
+                        all_time_slots.add(time_str)
+                        current += timedelta(minutes=30)
+            availability_times = sorted(list(all_time_slots))
+        
         doctors_with_specialty.append({
             "doctor": doctor,
+            "profile": profile,
             "specialty": specialty,
+            "availability_times": sorted(set(availability_times)) if availability_times else None,
         })
     
     # Get filter from query parameter
@@ -192,11 +232,20 @@ def detail(request, appointment_id):
     else:
         update_form = AppointmentUpdateForm(initial={"notes": appointment.notes})
 
+    # Get doctor profile if available
+    doctor_profile = None
+    if DoctorProfile:
+        try:
+            doctor_profile = DoctorProfile.objects.get(user=appointment.doctor)
+        except DoctorProfile.DoesNotExist:
+            pass
+
     context = {
         "appointment": appointment,
         "update_form": update_form,
         "is_doctor": role == "doctor",
         "can_cancel": appointment.can_be_cancelled(),
+        "doctor_profile": doctor_profile,
     }
     return render(request, "appointments/detail.html", context)
 

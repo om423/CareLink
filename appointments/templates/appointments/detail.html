@@ -28,12 +28,43 @@
             <div class="col-md-6">
               <strong><i class="fas fa-user-doctor me-2"></i>Doctor:</strong>
               <p class="mb-0">{{ appointment.doctor.get_full_name|default:appointment.doctor.username }}</p>
+              {% if doctor_profile %}
+                {% if doctor_profile.specialty %}
+                  <p class="mb-0 text-muted"><i class="fas fa-stethoscope me-1"></i>{{ doctor_profile.specialty }}</p>
+                {% endif %}
+                {% if doctor_profile.years_of_experience %}
+                  <p class="mb-0 text-muted"><i class="fas fa-certificate me-1"></i>{{ doctor_profile.years_of_experience }} years of experience</p>
+                {% endif %}
+              {% endif %}
             </div>
             <div class="col-md-6">
               <strong><i class="fas fa-user me-2"></i>Patient:</strong>
               <p class="mb-0">{{ appointment.patient.get_full_name|default:appointment.patient.username }}</p>
             </div>
           </div>
+          
+          {% if doctor_profile %}
+          <div class="row mb-3">
+            <div class="col-12">
+              <hr>
+              <strong><i class="fas fa-hospital me-2"></i>Clinic Information:</strong>
+              <div class="mt-2">
+                {% if doctor_profile.clinic_name %}
+                  <p class="mb-1"><strong>{{ doctor_profile.clinic_name }}</strong></p>
+                {% endif %}
+                {% if doctor_profile.clinic_address %}
+                  <p class="mb-1 text-muted"><i class="fas fa-map-marker-alt me-1"></i>{{ doctor_profile.clinic_address }}</p>
+                {% endif %}
+                {% if doctor_profile.consultation_fee %}
+                  <p class="mb-1"><i class="fas fa-dollar-sign me-1"></i>Consultation Fee: ${{ doctor_profile.consultation_fee }}</p>
+                {% endif %}
+                {% if doctor_profile.bio %}
+                  <p class="mb-0 mt-2"><em>{{ doctor_profile.bio }}</em></p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
 
           <div class="row mb-3">
             <div class="col-md-6">
