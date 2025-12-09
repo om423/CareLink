@@ -1,11 +1,9 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
-
 {% block title %}Platform Performance Dashboard | {{ block.super }}{% endblock %}
-
 {% block extrastyle %}
-{{ block.super }}
-<style>
+    {{ block.super }}
+    <style>
     .metric-card {
         background: white;
         border-radius: 8px;
@@ -119,278 +117,266 @@
     small {
         color: #495057;
     }
-</style>
+    </style>
 {% endblock %}
-
 {% block content %}
-<div class="dashboard-header">
-    <h1 style="margin: 0; font-size: 2rem;">
-        <i class="fas fa-chart-line me-2"></i>Platform Performance Dashboard
-    </h1>
-    <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
-        Monitor overall platform performance and user satisfaction metrics
-        <span class="float-end">
-            <small>Last updated: {{ last_updated|date:"M d, Y H:i:s" }}</small>
-        </span>
-    </p>
-</div>
-
-<!-- Overall Satisfaction Score -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="metric-card text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-            <div class="metric-label" style="color: rgba(255,255,255,0.9);">Overall User Satisfaction Score</div>
-            <div class="metric-value" style="color: white; font-size: 4rem;">
-                {{ satisfaction_score }}%
-            </div>
-            <div style="margin-top: 1rem;">
-                <div class="progress" style="height: 10px; background: rgba(255,255,255,0.3);">
-                    <div class="progress-bar bg-white" role="progressbar" 
-                         style="width: {{ satisfaction_score }}%"
-                         aria-valuenow="{{ satisfaction_score }}" 
-                         aria-valuemin="0" 
-                         aria-valuemax="100"></div>
+    <div class="dashboard-header">
+        <h1 style="margin: 0; font-size: 2rem;">
+            <i class="fas fa-chart-line me-2"></i>Platform Performance Dashboard
+        </h1>
+        <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+            Monitor overall platform performance and user satisfaction metrics
+            <span class="float-end">
+                <small>Last updated: {{ last_updated|date:"M d, Y H:i:s" }}</small>
+            </span>
+        </p>
+    </div>
+    <!-- Overall Satisfaction Score -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="metric-card text-center"
+                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white">
+                <div class="metric-label" style="color: rgba(255,255,255,0.9);">Overall User Satisfaction Score</div>
+                <div class="metric-value" style="color: white; font-size: 4rem;">{{ satisfaction_score }}%</div>
+                <div style="margin-top: 1rem;">
+                    <div class="progress"
+                         style="height: 10px;
+                                background: rgba(255,255,255,0.3)">
+                        <div class="progress-bar bg-white"
+                             role="progressbar"
+                             style="width: {{ satisfaction_score }}%"
+                             aria-valuenow="{{ satisfaction_score }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- User Metrics -->
-<h2 class="mb-3"><i class="fas fa-users me-2"></i>User Metrics</h2>
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="metric-card info">
-            <div class="metric-label">Total Users</div>
-            <div class="metric-value">{{ total_users }}</div>
-            <div class="metric-change">
-                <i class="fas fa-user-friends"></i> {{ total_patients }} patients, {{ total_doctors }} doctors
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="metric-card success">
-            <div class="metric-label">Active Users (30 days)</div>
-            <div class="metric-value">{{ active_users }}</div>
-            <div class="metric-change positive">
-                <i class="fas fa-arrow-up"></i> {{ active_users|floatformat:0 }}% of total
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="metric-card warning">
-            <div class="metric-label">Onboarding Completion Rate</div>
-            <div class="metric-value">{{ onboarding_rate }}%</div>
-            <div class="metric-change">
-                <i class="fas fa-check-circle"></i> {{ onboarding_completed }} / {{ total_users }} completed
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-label">New Users</div>
-            <div class="metric-value">{{ new_users_week }}</div>
-            <div class="metric-change">
-                <small style="color: #495057;">This week ({{ new_users_month }} this month)</small>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Platform Performance Metrics -->
-<h2 class="mb-3"><i class="fas fa-tachometer-alt me-2"></i>Platform Performance</h2>
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="chart-container">
-            <h4><i class="fas fa-stethoscope me-2"></i>Triage Interactions</h4>
-            <div class="row text-center mb-3">
-                <div class="col-4">
-                    <div class="metric-value" style="font-size: 1.5rem;">{{ total_triages }}</div>
-                    <small style="color: #495057; font-weight: 500;">Total</small>
-                </div>
-                <div class="col-4">
-                    <div class="metric-value" style="font-size: 1.5rem;">{{ triages_this_month }}</div>
-                    <small style="color: #495057; font-weight: 500;">This Month</small>
-                </div>
-                <div class="col-4">
-                    <div class="metric-value" style="font-size: 1.5rem;">{{ triages_today }}</div>
-                    <small style="color: #495057; font-weight: 500;">Today</small>
+    <!-- User Metrics -->
+    <h2 class="mb-3">
+        <i class="fas fa-users me-2"></i>User Metrics
+    </h2>
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card info">
+                <div class="metric-label">Total Users</div>
+                <div class="metric-value">{{ total_users }}</div>
+                <div class="metric-change">
+                    <i class="fas fa-user-friends"></i> {{ total_patients }} patients, {{ total_doctors }} doctors
                 </div>
             </div>
-            
-            <h5 class="mt-4 mb-3">Severity Distribution</h5>
-            <table class="stat-table">
-                {% for item in severity_dist %}
-                <tr>
-                    <td><strong>{{ item.severity|default:"Unknown" }}</strong></td>
-                    <td class="text-end">
-                        <span class="badge badge-large 
-                            {% if item.severity == 'Critical' %}bg-danger
-                            {% elif item.severity == 'Severe' %}bg-warning
-                            {% elif item.severity == 'Moderate' %}bg-info
-                            {% else %}bg-success{% endif %}">
-                            {{ item.count }}
-                        </span>
-                    </td>
-                    <td class="text-end" style="width: 100px;">
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar 
-                                {% if item.severity == 'Critical' %}bg-danger
-                                {% elif item.severity == 'Severe' %}bg-warning
-                                {% elif item.severity == 'Moderate' %}bg-info
-                                {% else %}bg-success{% endif %}" 
-                                role="progressbar" 
-                                style="width: {% widthratio item.count total_triages 100 %}%"
-                                aria-valuenow="{{ item.count }}" 
-                                aria-valuemin="0" 
-                                aria-valuemax="{{ total_triages }}"></div>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
         </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="chart-container">
-            <h4><i class="fas fa-calendar-check me-2"></i>Appointments</h4>
-            <div class="row text-center mb-3">
-                <div class="col-4">
-                    <div class="metric-value" style="font-size: 1.5rem;">{{ total_appointments }}</div>
-                    <small style="color: #495057; font-weight: 500;">Total</small>
-                </div>
-                <div class="col-4">
-                    <div class="metric-value" style="font-size: 1.5rem;">{{ appointments_this_month }}</div>
-                    <small style="color: #495057; font-weight: 500;">This Month</small>
-                </div>
-                <div class="col-4">
-                    <div class="metric-value" style="font-size: 1.5rem;">{{ appointments_today }}</div>
-                    <small style="color: #495057; font-weight: 500;">Today</small>
+        <div class="col-md-3">
+            <div class="metric-card success">
+                <div class="metric-label">Active Users (30 days)</div>
+                <div class="metric-value">{{ active_users }}</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-arrow-up"></i> {{ active_users|floatformat:0 }}% of total
                 </div>
             </div>
-            
-            <h5 class="mt-4 mb-3">Status Distribution</h5>
-            <table class="stat-table">
-                {% for item in appointment_status_dist %}
-                <tr>
-                    <td><strong>{{ item.status|title }}</strong></td>
-                    <td class="text-end">
-                        <span class="badge badge-large 
-                            {% if item.status == 'completed' %}bg-success
-                            {% elif item.status == 'confirmed' %}bg-info
-                            {% elif item.status == 'pending' %}bg-primary
-                            {% else %}bg-danger{% endif %}">
-                            {{ item.count }}
-                        </span>
-                    </td>
-                    <td class="text-end" style="width: 100px;">
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar 
-                                {% if item.status == 'completed' %}bg-success
-                                {% elif item.status == 'confirmed' %}bg-info
-                                {% elif item.status == 'pending' %}bg-primary
-                                {% else %}bg-danger{% endif %}" 
-                                role="progressbar" 
-                                style="width: {% widthratio item.count total_appointments 100 %}%"
-                                aria-valuenow="{{ item.count }}" 
-                                aria-valuemin="0" 
-                                aria-valuemax="{{ total_appointments }}"></div>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
         </div>
-    </div>
-</div>
-
-<!-- User Satisfaction Metrics -->
-<h2 class="mb-3"><i class="fas fa-smile me-2"></i>User Satisfaction Metrics</h2>
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="metric-card success">
-            <div class="metric-label">Triage Review Completion</div>
-            <div class="metric-value">{{ triage_review_rate }}%</div>
-            <div class="metric-change">
-                <i class="fas fa-check"></i> {{ triages_reviewed }} of {{ total_triages }} reviewed
-                <br>
-                <small style="color: #495057;">
-                    Pending: {{ triages_pending_review }} | Under Review: {{ triages_under_review }}
-                </small>
+        <div class="col-md-3">
+            <div class="metric-card warning">
+                <div class="metric-label">Onboarding Completion Rate</div>
+                <div class="metric-value">{{ onboarding_rate }}%</div>
+                <div class="metric-change">
+                    <i class="fas fa-check-circle"></i> {{ onboarding_completed }} / {{ total_users }} completed
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-label">New Users</div>
+                <div class="metric-value">{{ new_users_week }}</div>
+                <div class="metric-change">
+                    <small style="color: #495057;">This week ({{ new_users_month }} this month)</small>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="metric-card info">
-            <div class="metric-label">Data Integrity Verification</div>
-            <div class="metric-value">{{ verification_rate }}%</div>
-            <div class="metric-change">
-                <i class="fas fa-shield-alt"></i> {{ triages_verified }} verified
-                <br>
-                <small style="color: #495057;">
-                    Discrepancies: {{ triages_with_discrepancy }}
-                </small>
+    <!-- Platform Performance Metrics -->
+    <h2 class="mb-3">
+        <i class="fas fa-tachometer-alt me-2"></i>Platform Performance
+    </h2>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h4>
+                    <i class="fas fa-stethoscope me-2"></i>Triage Interactions
+                </h4>
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <div class="metric-value" style="font-size: 1.5rem;">{{ total_triages }}</div>
+                        <small style="color: #495057; font-weight: 500;">Total</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="metric-value" style="font-size: 1.5rem;">{{ triages_this_month }}</div>
+                        <small style="color: #495057; font-weight: 500;">This Month</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="metric-value" style="font-size: 1.5rem;">{{ triages_today }}</div>
+                        <small style="color: #495057; font-weight: 500;">Today</small>
+                    </div>
+                </div>
+                <h5 class="mt-4 mb-3">Severity Distribution</h5>
+                <table class="stat-table">
+                    {% for item in severity_dist %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.severity|default:"Unknown" }}</strong>
+                            </td>
+                            <td class="text-end">
+                                <span class="badge badge-large {% if item.severity == 'Critical' %}bg-danger {% elif item.severity == 'Severe' %}bg-warning {% elif item.severity == 'Moderate' %}bg-info {% else %}bg-success{% endif %}">
+                                    {{ item.count }}
+                                </span>
+                            </td>
+                            <td class="text-end" style="width: 100px;">
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar {% if item.severity == 'Critical' %}bg-danger {% elif item.severity == 'Severe' %}bg-warning {% elif item.severity == 'Moderate' %}bg-info {% else %}bg-success{% endif %}"
+                                         role="progressbar"
+                                         style="width: {% widthratio item.count total_triages 100 %}%"
+                                         aria-valuenow="{{ item.count }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="{{ total_triages }}"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h4>
+                    <i class="fas fa-calendar-check me-2"></i>Appointments
+                </h4>
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <div class="metric-value" style="font-size: 1.5rem;">{{ total_appointments }}</div>
+                        <small style="color: #495057; font-weight: 500;">Total</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="metric-value" style="font-size: 1.5rem;">{{ appointments_this_month }}</div>
+                        <small style="color: #495057; font-weight: 500;">This Month</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="metric-value" style="font-size: 1.5rem;">{{ appointments_today }}</div>
+                        <small style="color: #495057; font-weight: 500;">Today</small>
+                    </div>
+                </div>
+                <h5 class="mt-4 mb-3">Status Distribution</h5>
+                <table class="stat-table">
+                    {% for item in appointment_status_dist %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.status|title }}</strong>
+                            </td>
+                            <td class="text-end">
+                                <span class="badge badge-large {% if item.status == 'completed' %}bg-success {% elif item.status == 'confirmed' %}bg-info {% elif item.status == 'pending' %}bg-primary {% else %}bg-danger{% endif %}">
+                                    {{ item.count }}
+                                </span>
+                            </td>
+                            <td class="text-end" style="width: 100px;">
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar {% if item.status == 'completed' %}bg-success {% elif item.status == 'confirmed' %}bg-info {% elif item.status == 'pending' %}bg-primary {% else %}bg-danger{% endif %}"
+                                         role="progressbar"
+                                         style="width: {% widthratio item.count total_appointments 100 %}%"
+                                         aria-valuenow="{{ item.count }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="{{ total_appointments }}"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="metric-card warning">
-            <div class="metric-label">Appointment Completion Rate</div>
-            <div class="metric-value">{{ appointment_completion_rate }}%</div>
-            <div class="metric-change">
-                <i class="fas fa-calendar-check"></i> {{ completed_appointments }} completed
-                <br>
-                <small style="color: #495057;">
-                    Cancellation Rate: {{ cancellation_rate }}%
-                </small>
+    <!-- User Satisfaction Metrics -->
+    <h2 class="mb-3">
+        <i class="fas fa-smile me-2"></i>User Satisfaction Metrics
+    </h2>
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="metric-card success">
+                <div class="metric-label">Triage Review Completion</div>
+                <div class="metric-value">{{ triage_review_rate }}%</div>
+                <div class="metric-change">
+                    <i class="fas fa-check"></i> {{ triages_reviewed }} of {{ total_triages }} reviewed
+                    <br>
+                    <small style="color: #495057;">Pending: {{ triages_pending_review }} | Under Review: {{ triages_under_review }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card info">
+                <div class="metric-label">Data Integrity Verification</div>
+                <div class="metric-value">{{ verification_rate }}%</div>
+                <div class="metric-change">
+                    <i class="fas fa-shield-alt"></i> {{ triages_verified }} verified
+                    <br>
+                    <small style="color: #495057;">Discrepancies: {{ triages_with_discrepancy }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card warning">
+                <div class="metric-label">Appointment Completion Rate</div>
+                <div class="metric-value">{{ appointment_completion_rate }}%</div>
+                <div class="metric-change">
+                    <i class="fas fa-calendar-check"></i> {{ completed_appointments }} completed
+                    <br>
+                    <small style="color: #495057;">Cancellation Rate: {{ cancellation_rate }}%</small>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Doctor Metrics -->
-<h2 class="mb-3"><i class="fas fa-user-md me-2"></i>Doctor Metrics</h2>
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="metric-card">
-            <div class="metric-label">Total Doctors with Profiles</div>
-            <div class="metric-value">{{ total_doctors_with_profiles }}</div>
-            <div class="metric-change">
-                <i class="fas fa-user-md"></i> {{ doctors_with_availability }} have availability set
+    <!-- Doctor Metrics -->
+    <h2 class="mb-3">
+        <i class="fas fa-user-md me-2"></i>Doctor Metrics
+    </h2>
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-label">Total Doctors with Profiles</div>
+                <div class="metric-value">{{ total_doctors_with_profiles }}</div>
+                <div class="metric-change">
+                    <i class="fas fa-user-md"></i> {{ doctors_with_availability }} have availability set
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-label">Avg Appointments per Doctor</div>
+                <div class="metric-value">{{ avg_appointments_per_doctor }}</div>
+                <div class="metric-change">
+                    <i class="fas fa-chart-bar"></i> Average load distribution
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="metric-card">
-            <div class="metric-label">Avg Appointments per Doctor</div>
-            <div class="metric-value">{{ avg_appointments_per_doctor }}</div>
-            <div class="metric-change">
-                <i class="fas fa-chart-bar"></i> Average load distribution
+    <!-- Trends (Last 7 Days) -->
+    <h2 class="mb-3">
+        <i class="fas fa-chart-line me-2"></i>Activity Trends (Last 7 Days)
+    </h2>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h4>Triage Interactions</h4>
+                <canvas id="triageChart" height="100"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h4>Appointments</h4>
+                <canvas id="appointmentChart" height="100"></canvas>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Trends (Last 7 Days) -->
-<h2 class="mb-3"><i class="fas fa-chart-line me-2"></i>Activity Trends (Last 7 Days)</h2>
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="chart-container">
-            <h4>Triage Interactions</h4>
-            <canvas id="triageChart" height="100"></canvas>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="chart-container">
-            <h4>Appointments</h4>
-            <canvas id="appointmentChart" height="100"></canvas>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
     // Triage Trends Chart
     const triageCtx = document.getElementById('triageChart').getContext('2d');
     new Chart(triageCtx, {
@@ -457,29 +443,29 @@
             }
         }
     });
-</script>
-
-<!-- Quick Links -->
-<div class="row">
-    <div class="col-12">
-        <div class="chart-container">
-            <h4><i class="fas fa-link me-2"></i>Quick Links</h4>
-            <div class="d-flex flex-wrap gap-2">
-                <a href="/admin/triage/triageinteraction/" class="btn btn-primary">
-                    <i class="fas fa-stethoscope me-1"></i>View All Triage Interactions
-                </a>
-                <a href="/admin/appointments/appointment/" class="btn btn-success">
-                    <i class="fas fa-calendar-check me-1"></i>View All Appointments
-                </a>
-                <a href="/admin/profiles/patientprofile/" class="btn btn-info">
-                    <i class="fas fa-users me-1"></i>View All Users
-                </a>
-                <a href="/admin/doctors/doctorprofile/" class="btn btn-warning">
-                    <i class="fas fa-user-md me-1"></i>View All Doctors
-                </a>
+    </script>
+    <!-- Quick Links -->
+    <div class="row">
+        <div class="col-12">
+            <div class="chart-container">
+                <h4>
+                    <i class="fas fa-link me-2"></i>Quick Links
+                </h4>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="/admin/triage/triageinteraction/" class="btn btn-primary">
+                        <i class="fas fa-stethoscope me-1"></i>View All Triage Interactions
+                    </a>
+                    <a href="/admin/appointments/appointment/" class="btn btn-success">
+                        <i class="fas fa-calendar-check me-1"></i>View All Appointments
+                    </a>
+                    <a href="/admin/profiles/patientprofile/" class="btn btn-info">
+                        <i class="fas fa-users me-1"></i>View All Users
+                    </a>
+                    <a href="/admin/doctors/doctorprofile/" class="btn btn-warning">
+                        <i class="fas fa-user-md me-1"></i>View All Doctors
+                    </a>
+                </div>
             </div>
         </div>
     </div>
-</div>
 {% endblock %}
-

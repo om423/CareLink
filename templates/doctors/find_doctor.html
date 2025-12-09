@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block title %}Find a Doctor · CareLink{% endblock %}
 {% block content %}
     <div style="background: var(--cl-bg); min-height: calc(100vh - 200px);">
         <!-- Page Header -->
@@ -15,28 +16,325 @@
                             <i class="fas fa-arrow-left"></i>
                         </a>
                         <div>
-                            <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">Find a Doctor</h2>
+                            <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">
+                                <i class="fas fa-map-marker-alt me-2" style="color: var(--cl-blue);"></i>
+                                Find a Doctor
+                            </h2>
                             <p class="mb-0"
                                style="font-size: var(--cl-sm);
-                                      color: var(--cl-text-muted)">Search for healthcare professionals</p>
+                                      color: var(--cl-text-muted)">Search for healthcare professionals near you</p>
                         </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="distanceFilter"
+                                   class="form-label mb-0"
+                                   style="color: var(--cl-text)">Distance:</label>
+                            <select id="distanceFilter"
+                                    class="form-select form-select-sm"
+                                    style="width: auto">
+                                <option value="25" {% if max_distance == 25 %}selected{% endif %}>25 miles</option>
+                                <option value="50" {% if max_distance == 50 %}selected{% endif %}>50 miles</option>
+                                <option value="100" {% if max_distance == 100 %}selected{% endif %}>100 miles</option>
+                                <option value="200" {% if max_distance == 200 %}selected{% endif %}>200 miles</option>
+                                <option value="all" {% if max_distance == 'all' %}selected{% endif %}>All doctors</option>
+                            </select>
+                        </div>
+                        {% if not user_lat or not user_lon %}
+                            <div class="alert alert-warning mb-0 py-1 px-2"
+                                 style="font-size: 0.875rem">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <a href="{% url 'profiles:edit' %}" style="text-decoration: none;">Add your address</a> to filter by distance
+                            </div>
+                        {% endif %}
+                        <span class="badge" style="background: var(--cl-blue); color: white;">
+                            {{ doctors_count }} doctor{{ doctors_count|pluralize }} on map
+                        </span>
                     </div>
                 </div>
             </div>
         </header>
-        <div class="container py-4">
-            <div class="row">
-                <div class="col-lg-10 mx-auto">
-                    <div class="card" style="border: 1px solid var(--cl-border);">
-                        <div class="card-body text-center py-5">
-                            <i class="fas fa-user-doctor fa-4x mb-3" style="color: var(--cl-blue);"></i>
-                            <h3 class="mb-3" style="color: var(--cl-text);">Find a Doctor</h3>
-                            <p class="text-muted mb-4">Doctor directory functionality coming soon...</p>
-                            <p class="text-muted">This page allows patients to search for and find healthcare professionals.</p>
+        <div class="container-fluid py-4">
+            {% if not doctors_data %}
+                <div class="row">
+                    <div class="col-lg-10 mx-auto">
+                        <div class="card" style="border: 1px solid var(--cl-border);">
+                            <div class="card-body text-center py-5">
+                                <i class="fas fa-user-doctor fa-4x mb-3" style="color: var(--cl-blue);"></i>
+                                <h3 class="mb-3" style="color: var(--cl-text);">No Doctors Available</h3>
+                                <p class="text-muted mb-4">There are currently no doctors with location information available on the map.</p>
+                                <p class="text-muted">Doctors need to add their clinic address and location to appear on the map.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            {% else %}
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card" style="border: 1px solid var(--cl-border);">
+                            <div class="card-body p-0">
+                                <div id="map" style="height: 600px; width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <!-- Leaflet MarkerCluster -->
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    {% if doctors_data %}
+        <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the map centered on the US
+    const map = L.map('map').setView([39.8283, -98.5795], 4);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Doctor data from Django
+    const doctorsData = {{ doctors_data|safe }};
+    const userLat = {{ user_lat|default:"null" }};
+    const userLon = {{ user_lon|default:"null" }};
+    const maxDistance = {% if max_distance == 'all' %}'all'{% else %}{{ max_distance|default:50 }}{% endif %};
+    
+    // Create markers for each doctor
+    let markers = [];
+    let userLocationMarker = null;
+    let radiusCircle = null;
+    
+    // Function to create/update radius circle
+    function updateRadiusCircle(lat, lon, radiusMiles) {
+        // Remove existing circle
+        if (radiusCircle) {
+            map.removeLayer(radiusCircle);
+        }
+        
+        // Convert miles to meters (approximate)
+        const radiusMeters = radiusMiles * 1609.34;
+        
+        // Create circle
+        radiusCircle = L.circle([lat, lon], {
+            radius: radiusMeters,
+            color: '#0066cc',
+            weight: 2,
+            opacity: 0.8,
+            fillColor: '#0066cc',
+            fillOpacity: 0.1
+        }).addTo(map);
+        
+        // Calculate appropriate zoom level based on radius
+        let zoomLevel;
+        if (radiusMiles <= 25) {
+            zoomLevel = 9;
+        } else if (radiusMiles <= 50) {
+            zoomLevel = 8;
+        } else if (radiusMiles <= 100) {
+            zoomLevel = 7;
+        } else if (radiusMiles <= 200) {
+            zoomLevel = 6;
+        } else {
+            zoomLevel = 5;
+        }
+        
+        // Center map on user location and zoom to appropriate level
+        map.setView([lat, lon], zoomLevel);
+    }
+    
+    // Function to remove radius circle
+    function removeRadiusCircle() {
+        if (radiusCircle) {
+            map.removeLayer(radiusCircle);
+            radiusCircle = null;
+        }
+        
+        // Reset zoom to show all doctors across the country
+        map.setView([39.8283, -98.5795], 4);
+    }
+    
+    // Function to create doctor markers
+    function createDoctorMarkers(doctors) {
+        // Clear existing markers
+        markers.forEach(marker => map.removeLayer(marker));
+        markers = [];
+        
+        // Create marker cluster group for better performance
+        const markerClusterGroup = L.markerClusterGroup({
+            chunkedLoading: true,
+            maxClusterRadius: 50,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true
+        });
+        
+        doctors.forEach(function(doctor) {
+            // Create custom medical icon
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `
+                    <div style=" background: linear-gradient(135deg, #0066cc 0%, #004499 100%); width: 36px; height: 36px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 18px; ">
+                        <i class="fas fa-user-doctor" style="color: white;"></i>
+                    </div>
+                `,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+            
+            // Create popup content
+            let popupContent = `
+                <div style="min-width: 200px; color: var(--cl-text);">
+                    <h6 style="font-weight: var(--cl-font-semibold); margin-bottom: 0.5rem; color: var(--cl-text);">
+                        <i class="fas fa-user-md me-1" style="color: var(--cl-blue);"></i>
+                        Dr. ${doctor.name}
+                    </h6>
+                    <p style="margin-bottom: 0.25rem; color: var(--cl-text);">
+                        <strong>${doctor.clinic_name}</strong>
+                    </p>
+                    <p style="margin-bottom: 0.25rem; font-size: 0.875rem; color: var(--cl-text-muted);">
+                        <i class="fas fa-map-marker-alt me-1"></i>${doctor.clinic_address}
+                    </p>
+            `;
+            
+            if (doctor.distance !== undefined) {
+                popupContent += `
+                    <p style="margin-bottom: 0.5rem; color: var(--cl-blue); font-weight: var(--cl-font-medium);">
+                        <i class="fas fa-route me-1"></i>${doctor.distance} miles away
+                    </p>
+                `;
+            }
+            
+            popupContent += `
+                    <div style="margin-bottom: 0.5rem;">
+                        <span class="badge" style="background: var(--cl-teal); color: white; margin-right: 0.25rem;">
+                            ${doctor.specialty}
+                        </span>
+                    </div>
+                    <p style="margin-bottom: 0.25rem; font-size: 0.875rem; color: var(--cl-text);">
+                        <i class="fas fa-dollar-sign me-1"></i>Consultation: $${doctor.consultation_fee.toFixed(2)}
+                    </p>
+                    <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--cl-text);">
+                        <i class="fas fa-briefcase me-1"></i>Experience: ${doctor.years_of_experience} years
+                    </p>
+                    <a href="${doctor.url}" class="btn btn-sm btn-primary" style="width: 100%;">
+                        <i class="fas fa-info-circle me-1"></i>View Details
+                    </a>
+                </div>
+            `;
+            
+            // Create marker and add to cluster group
+            const marker = L.marker([doctor.latitude, doctor.longitude], { icon: customIcon })
+                .bindPopup(popupContent);
+            
+            markerClusterGroup.addLayer(marker);
+            markers.push(marker);
+        });
+        
+        // Add cluster group to map
+        map.addLayer(markerClusterGroup);
+        
+        // Fit map to show all markers
+        if (markers.length > 0) {
+            const group = new L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+    
+    // Function to calculate distance between two points
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 3959; // Earth's radius in miles
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+    
+    // Function to filter doctors by distance
+    function filterDoctorsByDistance(doctors, userLat, userLon, maxDistance) {
+        if (!userLat || !userLon || maxDistance === 'all') {
+            return doctors;
+        }
+        
+        const filteredDoctors = doctors.filter(doctor => {
+            const distance = calculateDistance(userLat, userLon, doctor.latitude, doctor.longitude);
+            doctor.distance = Math.round(distance * 10) / 10; // Round to 1 decimal place
+            return distance <= maxDistance;
+        });
+        
+        // Sort by distance
+        return filteredDoctors.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+    }
+    
+    // Function to update map with filtered doctors
+    function updateMapWithFilter() {
+        const selectedDistance = document.getElementById('distanceFilter').value;
+        let filteredDoctors = doctorsData;
+        
+        if (userLat && userLon && selectedDistance !== 'all') {
+            filteredDoctors = filterDoctorsByDistance(doctorsData, userLat, userLon, parseFloat(selectedDistance));
+            // Show radius circle
+            updateRadiusCircle(userLat, userLon, parseFloat(selectedDistance));
+        } else {
+            // Hide radius circle when showing all doctors
+            removeRadiusCircle();
+        }
+        
+        createDoctorMarkers(filteredDoctors);
+        
+        // Update doctor count badge
+        const badge = document.querySelector('.badge');
+        if (badge) {
+            badge.textContent = `${filteredDoctors.length} doctor${filteredDoctors.length !== 1 ? 's' : ''} on map`;
+        }
+    }
+    
+    // Event listeners
+    document.getElementById('distanceFilter').addEventListener('change', updateMapWithFilter);
+    
+    // Initialize map with current data
+    createDoctorMarkers(doctorsData);
+    
+    // Apply initial distance filtering if user location is available and distance is not 'all'
+    if (userLat && userLon && maxDistance && maxDistance !== 'all') {
+        updateMapWithFilter();
+    } else {
+        // Show all doctors by default
+        updateMapWithFilter();
+    }
+    
+    // Add user location marker if coordinates are available
+    if (userLat && userLon) {
+        const userIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `
+                <div style=" background: #10b981; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); "></div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+        
+        userLocationMarker = L.marker([userLat, userLon], { icon: userIcon })
+            .addTo(map)
+            .bindPopup('<strong>Your Location</strong>');
+    }
+});
+        </script>
+    {% endif %}
 {% endblock %}
