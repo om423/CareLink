@@ -289,16 +289,23 @@
                                       method="post"
                                       data-interaction-id="{{ interaction.id }}">
                                     {% csrf_token %}
-                                    
                                     <div class="mb-3">
                                         <label class="form-label" style="font-weight: var(--cl-font-medium);">Verification Status</label>
                                         <select name="integrity_status" class="form-select">
-                                            <option value="pending" {% if interaction.data_integrity_status == 'pending' %}selected{% endif %}>Pending Verification</option>
-                                            <option value="verified" {% if interaction.data_integrity_status == 'verified' %}selected{% endif %}>Verified - Consistent</option>
-                                            <option value="discrepancy" {% if interaction.data_integrity_status == 'discrepancy' %}selected{% endif %}>Discrepancy Found</option>
+                                            <option value="pending"
+                                                    {% if interaction.data_integrity_status == 'pending' %}selected{% endif %}>
+                                                Pending Verification
+                                            </option>
+                                            <option value="verified"
+                                                    {% if interaction.data_integrity_status == 'verified' %}selected{% endif %}>
+                                                Verified - Consistent
+                                            </option>
+                                            <option value="discrepancy"
+                                                    {% if interaction.data_integrity_status == 'discrepancy' %}selected{% endif %}>
+                                                Discrepancy Found
+                                            </option>
                                         </select>
                                     </div>
-
                                     <div class="mb-3">
                                         <label class="form-label" style="font-weight: var(--cl-font-medium);">Integrity Notes</label>
                                         <textarea name="integrity_notes"
@@ -306,7 +313,6 @@
                                                   class="form-control"
                                                   placeholder="Describe any discrepancies or confirmation details...">{{ interaction.data_integrity_notes|default:"" }}</textarea>
                                     </div>
-
                                     <div class="d-flex justify-content-between align-items-center">
                                         <button type="submit" class="btn btn-outline-primary">
                                             <i class="fas fa-shield-alt me-2"></i>Update Verification
@@ -317,7 +323,6 @@
                             </div>
                         </div>
                     {% endif %}
-
                     <!-- 6. Doctor Notes / Feedback Section (Doctors/Staff/Admin Only) -->
                     {% if user.is_staff or user.is_superuser or user.patient_profile.role == 'doctor' %}
                         <div class="card mb-4" style="border: 1px solid var(--cl-border);">

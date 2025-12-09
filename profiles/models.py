@@ -27,6 +27,23 @@ class PatientProfile(models.Model):
     allergies = models.TextField(
         blank=True, help_text="Known allergies (medications, foods, environmental)"
     )
+    address = models.TextField(
+        blank=True, help_text="Patient's home address for finding nearby doctors"
+    )
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        help_text="Latitude of patient's location",
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        help_text="Longitude of patient's location",
+    )
     onboarding_completed = models.BooleanField(
         default=False, help_text="Whether user has completed onboarding"
     )

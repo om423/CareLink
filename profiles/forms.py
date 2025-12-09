@@ -8,7 +8,7 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = PatientProfile
-        fields = ("age", "weight", "medical_history", "allergies")
+        fields = ("age", "weight", "medical_history", "allergies", "address")
         widgets = {
             "age": forms.NumberInput(
                 attrs={"class": "form-control", "placeholder": "Age in years"}
@@ -28,6 +28,12 @@ class ProfileForm(forms.ModelForm):
                     "class": "form-control",
                     "rows": 4,
                     "placeholder": ("Known allergies (medications, foods, environmental)"),
+                }
+            ),
+            "address": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Your address (e.g., 123 Main St, Atlanta, GA 30309)",
                 }
             ),
         }

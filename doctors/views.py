@@ -1,10 +1,11 @@
-from django.db import models
+import json
+
+from django.contrib import messages
+from django.db import models, transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from django.contrib import messages
-from django.db import transaction
 
 try:
     from reportlab.lib.pagesizes import letter
@@ -15,8 +16,9 @@ except ImportError:
 
 from accounts.views import doctor_required, patient_required
 from triage.models import TriageDoctorNote, TriageInteraction
-from .models import DoctorProfile, DoctorAvailability
-from .forms import DoctorProfileForm, DoctorAvailabilityFormSet
+
+from .forms import DoctorAvailabilityFormSet, DoctorProfileForm
+from .models import DoctorAvailability, DoctorProfile
 
 
 @doctor_required
@@ -90,8 +92,93 @@ def index(request):
 
 @patient_required
 def find_doctor(request):
-    """Find a doctor page - only accessible to patients."""
-    return render(request, "doctors/find_doctor.html")
+    """Find a doctor page with map view - only accessible to patients."""
+    from profiles.models import PatientProfile
+
+    from .models import DoctorProfile
+    from .utils import calculate_distance, geocode_location
+
+    # Get all doctors with coordinates
+    doctors_with_coords = DoctorProfile.objects.filter(
+        clinic_latitude__isnull=False, clinic_longitude__isnull=False
+    )
+
+    # Prepare doctor data for the map
+    doctors_data = []
+    for doctor in doctors_with_coords:
+        doctors_data.append(
+            {
+                "id": doctor.id,
+                "name": doctor.user.get_full_name() or doctor.user.username,
+                "specialty": doctor.specialty,
+                "clinic_name": doctor.clinic_name,
+                "clinic_address": doctor.clinic_address,
+                "latitude": float(doctor.clinic_latitude),
+                "longitude": float(doctor.clinic_longitude),
+                "consultation_fee": float(doctor.consultation_fee),
+                "years_of_experience": doctor.years_of_experience,
+                "url": f"/doctors/{doctor.id}/",  # Future detail page
+            }
+        )
+
+    # Get user's location from profile if available
+    user_lat = None
+    user_lon = None
+    user_location = None
+    max_distance = request.GET.get("distance", "all")  # Default to 'all' to show all doctors
+
+    try:
+        patient_profile = PatientProfile.objects.get(user=request.user)
+        # Get location from profile if available
+        if patient_profile.latitude and patient_profile.longitude:
+            user_lat = float(patient_profile.latitude)
+            user_lon = float(patient_profile.longitude)
+            user_location = patient_profile.address
+        elif patient_profile.address:
+            # Try to geocode if address exists but coordinates don't
+            try:
+                lat, lon = geocode_location(patient_profile.address)
+                if lat is not None and lon is not None:
+                    patient_profile.latitude = lat
+                    patient_profile.longitude = lon
+                    patient_profile.save(update_fields=["latitude", "longitude"])
+                    user_lat = float(lat)
+                    user_lon = float(lon)
+                    user_location = patient_profile.address
+            except Exception:
+                pass
+    except PatientProfile.DoesNotExist:
+        pass
+
+    # Calculate distances if user location is available (for display, not filtering)
+    # Frontend will handle filtering based on distance selector
+    if user_lat and user_lon:
+        for doctor_data in doctors_data:
+            distance = calculate_distance(
+                user_lat, user_lon, doctor_data["latitude"], doctor_data["longitude"]
+            )
+            doctor_data["distance"] = round(distance, 1)
+        # Sort by distance for better UX
+        doctors_data.sort(key=lambda x: x.get("distance", float("inf")))
+    else:
+        # Sort by clinic name if no user location
+        doctors_data.sort(key=lambda x: x["clinic_name"])
+
+    # Don't filter on backend - let frontend JavaScript handle filtering
+    # This ensures all doctors are available for the map, and filtering happens client-side
+
+    # Convert doctors_data to JSON-safe format
+    doctors_data_json = json.dumps(doctors_data)
+
+    context = {
+        "doctors_data": doctors_data_json,
+        "doctors_count": len(doctors_data),
+        "user_lat": user_lat,
+        "user_lon": user_lon,
+        "max_distance": max_distance,
+        "user_location": user_location,
+    }
+    return render(request, "doctors/find_doctor.html", context)
 
 
 @doctor_required
@@ -100,19 +187,18 @@ def manage_availability(request):
     # Get or create the DoctorProfile for the current user
     # Provide defaults for non-nullable fields to avoid IntegrityError on creation
     defaults = {
-        'specialty': 'General Practice',
-        'clinic_name': 'My Clinic',
-        'clinic_address': '123 Main St',
-        'consultation_fee': 100.00,
-        'years_of_experience': 0
+        "specialty": "General Practice",
+        "clinic_name": "My Clinic",
+        "clinic_address": "123 Main St",
+        "consultation_fee": 100.00,
+        "years_of_experience": 0,
     }
-    profile, created = DoctorProfile.objects.get_or_create(
-        user=request.user,
-        defaults=defaults
-    )
-    
+    profile, created = DoctorProfile.objects.get_or_create(user=request.user, defaults=defaults)
+
     if created:
-        messages.info(request, "A new profile has been created for you. Please update your details.")
+        messages.info(
+            request, "A new profile has been created for you. Please update your details."
+        )
 
     if request.method == "POST":
         profile_form = DoctorProfileForm(request.POST, request.FILES, instance=profile)
@@ -132,17 +218,20 @@ def manage_availability(request):
         if not profile.availabilities.exists():
             initial_data = []
             for day in range(7):
-                initial_data.append({
-                    'day_of_week': day,
-                    'start_time': '09:00',
-                    'end_time': '17:00',
-                    'is_available': day < 5  # Mon-Fri
-                })
-            # Use extra to show the forms, but we need to handle this carefully with formsets
-            # For now, let's just create the objects if they don't exist to simplify the formset usage
+                initial_data.append(
+                    {
+                        "day_of_week": day,
+                        "start_time": "09:00",
+                        "end_time": "17:00",
+                        "is_available": day < 5,  # Mon-Fri
+                    }
+                )
+            # Use extra to show the forms, but we need to handle this carefully
+            # For now, let's just create the objects if they don't exist
+            # to simplify the formset usage
             for data in initial_data:
                 DoctorAvailability.objects.create(doctor=profile, **data)
-        
+
         formset = DoctorAvailabilityFormSet(instance=profile)
 
     context = {
