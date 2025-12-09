@@ -1,6 +1,7 @@
 import json
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db import models, transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -179,6 +180,62 @@ def find_doctor(request):
         "user_location": user_location,
     }
     return render(request, "doctors/find_doctor.html", context)
+
+
+@login_required
+def doctor_detail(request, doctor_id):
+    """View doctor profile details - accessible to all logged-in users."""
+    doctor_profile = get_object_or_404(DoctorProfile, id=doctor_id)
+    doctor_user = doctor_profile.user
+
+    # Get availability
+    availability = DoctorAvailability.objects.filter(
+        doctor=doctor_profile, is_available=True
+    ).order_by("day_of_week", "start_time")
+
+    # Calculate distance if patient has location
+    distance = None
+    if request.user.is_authenticated:
+        try:
+            from profiles.models import PatientProfile
+
+            from .utils import calculate_distance
+
+            patient_profile = PatientProfile.objects.get(user=request.user)
+            if (
+                patient_profile.latitude
+                and patient_profile.longitude
+                and doctor_profile.clinic_latitude
+                and doctor_profile.clinic_longitude
+            ):
+                distance = calculate_distance(
+                    float(patient_profile.latitude),
+                    float(patient_profile.longitude),
+                    float(doctor_profile.clinic_latitude),
+                    float(doctor_profile.clinic_longitude),
+                )
+                distance = round(distance, 1)
+        except Exception:
+            pass
+
+    # Check if user can book appointments (patients only)
+    can_book = False
+    try:
+        from accounts.views import get_user_role
+
+        role = get_user_role(request.user)
+        can_book = role == "patient"
+    except Exception:
+        pass
+
+    context = {
+        "doctor_profile": doctor_profile,
+        "doctor_user": doctor_user,
+        "availability": availability,
+        "distance": distance,
+        "can_book": can_book,
+    }
+    return render(request, "doctors/detail.html", context)
 
 
 @doctor_required

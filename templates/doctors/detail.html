@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dr. {{ doctor_user.get_full_name|default:doctor_user.username }} · CareLink{% endblock %}
+{% block content %}
+    <div style="background: var(--cl-bg); min-height: calc(100vh - 200px);">
+        <!-- Page Header -->
+        <header style="background: white; border-bottom: 1px solid var(--cl-border);">
+            <div class="container py-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="{% url 'doctors:find_doctor' %}"
+                           class="btn btn-sm"
+                           style="background: transparent;
+                                  border: none;
+                                  color: var(--cl-text-muted)">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <div>
+                            <h2 class="mb-0" style="font-size: var(--cl-h3); color: var(--cl-text);">
+                                <i class="fas fa-user-md me-2" style="color: var(--cl-blue);"></i>
+                                Dr. {{ doctor_user.get_full_name|default:doctor_user.username }}
+                            </h2>
+                            <p class="mb-0"
+                               style="font-size: var(--cl-sm);
+                                      color: var(--cl-text-muted)">{{ doctor_profile.specialty }}</p>
+                        </div>
+                    </div>
+                    {% if can_book %}
+                        <a href="{% url 'appointments:book' %}?doctor={{ doctor_user.id }}"
+                           class="btn btn-success">
+                            <i class="fas fa-calendar-plus me-2"></i>Book Appointment
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+        <div class="container py-4">
+            <div class="row g-4">
+                <!-- Main Content -->
+                <div class="col-lg-8">
+                    <!-- Doctor Profile Card -->
+                    <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 text-center mb-3 mb-md-0">
+                                    <div class="d-flex align-items-center justify-content-center"
+                                         style="width: 120px;
+                                                height: 120px;
+                                                border-radius: 50%;
+                                                background: linear-gradient(135deg, var(--cl-blue) 0%, var(--cl-teal) 100%);
+                                                color: white;
+                                                margin: 0 auto">
+                                        <i class="fas fa-user-md fa-4x"></i>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <h3 class="mb-2" style="color: var(--cl-text);">Dr. {{ doctor_user.get_full_name|default:doctor_user.username }}</h3>
+                                    <p class="text-muted mb-2">
+                                        <i class="fas fa-stethoscope me-2"></i>{{ doctor_profile.specialty }}
+                                    </p>
+                                    {% if doctor_profile.years_of_experience %}
+                                        <p class="text-muted mb-2">
+                                            <i class="fas fa-briefcase me-2"></i>{{ doctor_profile.years_of_experience }} years of experience
+                                        </p>
+                                    {% endif %}
+                                    {% if distance %}
+                                        <p class="text-primary mb-2">
+                                            <i class="fas fa-route me-2"></i>{{ distance }} miles away
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if doctor_profile.bio %}
+                                <hr>
+                                <div>
+                                    <h5 style="color: var(--cl-text); margin-bottom: 1rem;">About</h5>
+                                    <p style="color: var(--cl-text-muted); line-height: 1.6;">{{ doctor_profile.bio }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Clinic Information -->
+                    <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+                        <div class="card-header bg-transparent border-bottom">
+                            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                <i class="fas fa-hospital me-2" style="color: var(--cl-blue);"></i>
+                                Clinic Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <strong style="color: var(--cl-text);">Clinic Name:</strong>
+                                    <p class="mb-0" style="color: var(--cl-text-muted);">{{ doctor_profile.clinic_name }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong style="color: var(--cl-text);">Consultation Fee:</strong>
+                                    <p class="mb-0" style="color: var(--cl-text-muted);">${{ doctor_profile.consultation_fee|floatformat:2 }}</p>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <strong style="color: var(--cl-text);">Address:</strong>
+                                    <p class="mb-0" style="color: var(--cl-text-muted);">
+                                        <i class="fas fa-map-marker-alt me-1"></i>{{ doctor_profile.clinic_address }}
+                                    </p>
+                                </div>
+                                {% if doctor_profile.clinic_latitude and doctor_profile.clinic_longitude %}
+                                    <div class="col-12">
+                                        <div id="clinic-map"
+                                             style="height: 300px;
+                                                    width: 100%;
+                                                    border-radius: 8px"></div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Availability -->
+                    {% if availability %}
+                        <div class="card mb-4" style="border: 1px solid var(--cl-border);">
+                            <div class="card-header bg-transparent border-bottom">
+                                <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">
+                                    <i class="fas fa-calendar-alt me-2" style="color: var(--cl-blue);"></i>
+                                    Availability
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    {% regroup availability by get_day_of_week_display as availability_by_day %}
+                                    {% for day_group in availability_by_day %}
+                                        <div class="col-md-6 mb-3">
+                                            <strong style="color: var(--cl-text);">{{ day_group.grouper }}:</strong>
+                                            <div>
+                                                {% for avail in day_group.list %}
+                                                    <span class="badge"
+                                                          style="background: var(--cl-teal);
+                                                                 color: white;
+                                                                 margin-right: 0.5rem;
+                                                                 margin-bottom: 0.25rem">
+                                                        {{ avail.start_time|time:"g:i A" }} - {{ avail.end_time|time:"g:i A" }}
+                                                    </span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <div class="card"
+                         style="border: 1px solid var(--cl-border);
+                                position: sticky;
+                                top: 20px">
+                        <div class="card-header bg-transparent border-bottom">
+                            <h5 class="mb-0" style="font-size: var(--cl-h4); color: var(--cl-text);">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if can_book %}
+                                <a href="{% url 'appointments:book' %}?doctor={{ doctor_user.id }}"
+                                   class="btn btn-success w-100 mb-3">
+                                    <i class="fas fa-calendar-plus me-2"></i>Book Appointment
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'doctors:find_doctor' %}"
+                               class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-map-marker-alt me-2"></i>Back to Map
+                            </a>
+                            {% if distance %}
+                                <div class="alert alert-info mb-0 mt-3">
+                                    <i class="fas fa-route me-2"></i>
+                                    <strong>{{ distance }} miles</strong> from your location
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if doctor_profile.clinic_latitude and doctor_profile.clinic_longitude %}
+        <!-- Leaflet CSS -->
+        <link rel="stylesheet"
+              href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+              integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+              crossorigin="" />
+        <!-- Leaflet JavaScript -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+                integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+                crossorigin=""></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const map = L.map('clinic-map').setView(
+                    [{{ doctor_profile.clinic_latitude }}, {{ doctor_profile.clinic_longitude }}],
+                    15
+                );
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                const clinicIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `
+                        <div style=" background: linear-gradient(135deg, #0066cc 0%, #004499 100%); width: 40px; height: 40px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 20px; ">
+                            <i class="fas fa-hospital" style="color: white;"></i>
+                        </div>
+                    `,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
+                });
+                
+                L.marker(
+                    [{{ doctor_profile.clinic_latitude }}, {{ doctor_profile.clinic_longitude }}],
+                    { icon: clinicIcon }
+                ).addTo(map).bindPopup(
+                    '<strong>{{ doctor_profile.clinic_name }}</strong><br>{{ doctor_profile.clinic_address }}'
+                );
+            });
+        </script>
+    {% endif %}
+{% endblock %}
