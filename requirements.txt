@@ -1,0 +1,21 @@
+# Core Django Framework
+Django>=5.0,<6.0
+
+# Environment variable management
+django-environ>=0.11.0
+
+# Static file serving
+whitenoise>=6.0.0
+
+# Google Gemini AI SDK
+# Try new SDK first, falls back to legacy
+google-genai>=0.2.0
+google-generativeai>=0.3.0
+
+# Testing (optional, for development)
+pytest>=7.0.0
+pytest-django>=4.5.0
+
+# Production WSGI server (optional, for production deployment)
+gunicorn>=21.0.0
+
